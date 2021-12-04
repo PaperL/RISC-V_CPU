@@ -11,7 +11,9 @@
 ## 结构
 
 - Tomasulo's algorithm
-- DesignDraft![DesignDraft](https://link.jscdn.cn/sharepoint/aHR0cHM6Ly9zanR1ZWR1Y24tbXkuc2hhcmVwb2ludC5jb20vOmk6L2cvcGVyc29uYWwvZnJhbmtfcWl1X3NqdHVfZWR1X2NuL0VRR183N1Jsa3JCSXRFTnlLa3VzVFJvQjNFVGwxT0ZQSVJmT2F2Q1lONVJTM2c_ZT1tdllrYnI.jpg)
+- 设计手稿见 `Design.pdf`
+  - [![owIJht.jpg](https://s4.ax1x.com/2021/12/04/owIJht.jpg)](https://imgtu.com/i/owIJht)
+
 
 ## 说明
 
