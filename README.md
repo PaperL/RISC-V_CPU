@@ -11,14 +11,16 @@
 ## 结构
 
 - Tomasulo's algorithm
-- 设计手稿见 `Design.pdf`
-  - [![owIJht.jpg](https://s4.ax1x.com/2021/12/04/owIJht.jpg)](https://imgtu.com/i/owIJht)
-
+- 设计手稿见 [Design Draft](Design.pdf)
 
 ## 说明
 
-- 整体文件结构说明见 [tutorial.md](https://github.com/PaperL/RISC-V_CPU/blob/main/tutorial.md)
-- 文件格式化使用 VS Code 插件 `verilog-formatter` v1.0.0
-  - 使用 `K&R` Style, 附加参数为 `--convert-tabs -o -p --break-elseifs` (参考 [istyle-verilog-formatter](https://github.com/thomasrussellmurphy/istyle-verilog-formatter))
-- 运行指令详见 `riscv/my_test.sh`
+- 题面文件结构说明见 [tutorial.md](tutorial.md)
+- 开发环境 Windows, VS Code, iVerilog, Vivado
+- VS Code 所用插件
+  - 语言支持 [`Verilog-HDL/SystemVerilog/Bluespec SystemVerilog`](https://github.com/mshr-h/vscode-verilog-hdl-support) `v1.5.1`
+  - 自动代码格式化 [`verilog-formatter`](https://github.com/IsaacJT/Verilog-Formatter) `v1.0.0`
+    - 使用 `K&R` Style, 附加参数为 `--convert-tabs -o -p --break-elseifs` (参考 [istyle-verilog-formatter](https://github.com/thomasrussellmurphy/istyle-verilog-formatter))
+  - VCD 文件浏览器 [`impulse`](https://github.com/toem/impulse.vscode) `v0.3.4`
+- 运行指令详见 [`riscv/my_test.sh`](riscv/my_test.sh)
 
