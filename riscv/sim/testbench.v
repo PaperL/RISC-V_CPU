@@ -8,21 +8,27 @@ reg clk;
 reg rst;
 
 riscv_top #(.SIM(1)) top(
-    .EXCLK(clk),
-    .btnC(rst),
-    .Tx(),
-    .Rx(),
-    .led()
-);
+              .EXCLK(clk),
+              .btnC(rst),
+              .Tx(),
+              .Rx(),
+              .led()
+          );
 
 initial begin
-  clk=0;
-  rst=1;
-  repeat(50) #1 clk=!clk;
-  rst=0; 
-  forever #1 clk=!clk;
+    clk = 0;
+    rst = 1;
+    repeat(50) #1 clk = !clk;
+    rst = 0;
+    forever #1 clk = !clk;
 
-  $finish;
+    $finish;
+end
+
+initial begin
+    $dumpfile("cpu_.vcd");
+    $dumpvars(0, testbench);
+    //#300000000 $finish;
 end
 
 endmodule

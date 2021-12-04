@@ -1,0 +1,4 @@
+{
+    // 关闭 <= 符号连字效果
+    "editor.fontLigatures": false
+}

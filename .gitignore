@@ -1,1 +1,3 @@
 riscv/test/
+*.o
+*.vcd
