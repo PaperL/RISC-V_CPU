@@ -1,5 +1,5 @@
 `include "header.vh" 
-// IF: Instruction Fetch
+// Instruction Fetch Module
 module ifet (input wire clk,
              input wire rst,
              input wire en,
@@ -14,6 +14,7 @@ module ifet (input wire clk,
              input wire[`REG_DAT_W - 1: 0] iBP_Pcn,
 
              output reg oIS_En,
+             output wire[`REG_DAT_W - 1: 0] oIS_Pc,
              output wire[`INS_DAT_W - 1: 0] oIS_Ins
             );
 reg[`REG_DAT_W - 1: 0] PC;

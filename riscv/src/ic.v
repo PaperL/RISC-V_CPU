@@ -1,5 +1,5 @@
 `include "header.vh"
-
+// Instruction Cache Module
 module ic (input wire clk,
            input wire rst,
            input wire en,

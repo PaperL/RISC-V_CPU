@@ -1,5 +1,5 @@
 `include "header.vh"
-
+// Branch Predictor Module
 module bp (input wire clk,
            input wire rst,
            input wire en,

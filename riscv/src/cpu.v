@@ -3,9 +3,9 @@
 `include "header.vh"
 
 module cpu(
-           input wire clk_in,          // system clock signal
-           input wire rst_in,          // reset signal
-           input wire rdy_in,          // ready signal, pause cpu when low
+           input wire clk,          // System Clock signal
+           input wire rst,          // Reset signal
+           input wire en,          // Enabled signal, pause cpu when low
 
            input wire [7: 0] mem_din,             // data input bus
            output wire [ 7: 0] mem_dout,         // data output bus
@@ -20,7 +20,7 @@ module cpu(
 // implementation goes here
 
 // Specifications:
-// - Pause cpu(freeze pc, registers, etc.) when rdy_in is low
+// - Pause cpu(freeze pc, registers, etc.) when en is low
 // - Memory read result will be returned in the next cycle. Write takes 1 cycle(no need to wait)
 // - Memory is of size 128KB, with valid address ranging from 0x0 to 0x20000
 // - I/O port is mapped to address higher than 0x30000 (mem_a[17:16]==2'b11)
@@ -64,8 +64,8 @@ wire[`MEM_ADD_W - 1 : 0] DC_MC_Add;
 wire[`MEM_DAT_W - 1 : 0] DC_MC_Dat;
 
 ram RAM(
-        clk_in,
-        rdy_in,
+        clk,
+        en,
         MC_RAM_Rw,
         MC_RAM_Add,
         MC_RAM_Dat,
@@ -73,9 +73,9 @@ ram RAM(
     );
 
 mc MC(
-       clk_in,
-       rst_in,
-       rdy_in,
+       clk,
+       rst,
+       en,
 
        IC_MC_En,
        IC_MC_Add,
@@ -97,9 +97,9 @@ mc MC(
 
 
 ic IC(
-       clk_in,
-       rst_in,
-       rdy_in,
+       clk,
+       rst,
+       en,
 
        IF_IC_En,
        IF_IC_Pc,
@@ -116,9 +116,9 @@ ic IC(
    );
 
 bp BP(
-       clk_in,
-       rst_in,
-       rdy_in,
+       clk,
+       rst,
+       en,
        IC_BP_En,
        IC_BP_Ins,
        IF_BP_Pc,
@@ -127,9 +127,9 @@ bp BP(
    );
 
 ifet IF(
-         clk_in,
-         rst_in,
-         rdy_in,
+         clk,
+         rst,
+         en,
 
          IF_IC_En,
          IF_IC_Pc,
@@ -147,11 +147,11 @@ ifet IF(
 
 
 
-always @(posedge clk_in) begin
-    if (rst_in) begin
+always @(posedge clk) begin
+    if (rst) begin
 
     end
-    else if (!rdy_in) begin
+    else if (!en) begin
 
     end
     else begin

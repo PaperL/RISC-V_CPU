@@ -1,5 +1,5 @@
 `include "header.vh"
-
+// Memory Controller Module
 module mc (input wire clk,
            input wire rst,
            input wire en,
