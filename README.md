@@ -6,7 +6,7 @@
 
 - 一个用 Verilog 编写的 RISC-V CPU, 功能为运行二进制可执行文件
 - 本项目为 ACM 班 20 级大二大作业, 题面见: [RISCV-CPU](https://github.com/ACMClassCourses/RISCV-CPU)
-- 目前进度: `Finish IS`
+- 目前进度: `Finish REG & RS`
 
 ## 结构
 
@@ -38,7 +38,7 @@
 | --------- | -------- | -------- | ------- | ------ | ------- | ------------------------------------- |
 | **LUI**   | 00001    | U        | 0110111 |        |         | Load Upper Immediate                  |
 | **AUIPC** | 00010    |          | 0010111 |        |         | Add Upper Immediate to PC             |
-| **JAL**   | 00011    | UJ       | 1101111 |        |         | Jump & Link                           |
+| **JAL**   | 00011    | UJ       | 1101111 |        |         | Jump & Link **(在 IF 阶段实现)**      |
 | **JALR**  | 00100    | I        | 1100111 |        |         | Jump & Link Register                  |
 | **BEQ**   | 00101    | SB       | 1100011 | 000    |         | Branch Equal                          |
 | **BNE**   | 00110    |          |         | 001    |         | Branch Not Equal                      |

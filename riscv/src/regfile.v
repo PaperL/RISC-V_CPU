@@ -1,4 +1,4 @@
-`include "header.vh"
+`include "header.vh" 
 // Register File Module
 module regfile(input wire clk,
                input wire rst,
@@ -9,19 +9,26 @@ module regfile(input wire clk,
                input wire[`REG_ADD_W - 1: 0] iIS_Rs2,
                input wire iIS_EnRd,
                input wire[`REG_ADD_W - 1: 0] iIS_Rd,
+               input wire[`REG_DAT_W - 1 : 0] iIS_Op,
+               input wire[`REG_DAT_W - 1: 0] iIS_Imm,
+               input wire[`REG_DAT_W - 1: 0] iIS_Pc,
 
-               input wire[`REG_ADD_W - 1: 0] iROB_Qn,
+               input wire[`ROB_ADD_W - 1: 0] iROB_Qn,
                input wire iROB_En,
-               input wire[`REG_ADD_W - 1: 0] iROB_Rd,
+               input wire[`ROB_ADD_W - 1: 0] iROB_Rd,
                input wire[`REG_DAT_W - 1: 0] iROB_Vd,
                output reg oROB_En,
-               output reg[`REG_ADD_W - 1: 0] oROB_Qs1,
-               output reg[`REG_ADD_W - 1: 0] oROB_Qs2,
+               output reg[`ROB_ADD_W - 1: 0] oROB_Qs1,
+               output reg[`ROB_ADD_W - 1: 0] oROB_Qs2,
                output wire[`REG_DAT_W - 1: 0] oROB_Vs1,
-               output wire[`REG_DAT_W - 1: 0] oROB_Vs2
+               output wire[`REG_DAT_W - 1: 0] oROB_Vs2,
+               // Passing by
+               output wire[`INS_OP_W - 1 : 0] oROB_Op,
+               output wire[`REG_DAT_W - 1: 0] oROB_Pc,
+               output wire[`REG_DAT_W - 1: 0] oROB_Imm
               );
 reg[`REG_DAT_W - 1: 0] v[`REG_S - 1: 0];
-reg[`REG_ADD_W - 1: 0] q[`REG_S - 1: 0];
+reg[`ROB_ADD_W - 1: 0] q[`REG_S - 1: 0];
 
 assign oROB_Vs1 = v[iIS_Rs1];
 assign oROB_Vs2 = v[iIS_Rs2];

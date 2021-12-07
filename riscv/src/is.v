@@ -18,6 +18,7 @@ module is(
            output wire[`REG_ADD_W - 1: 0] oREG_Rd,
            output wire[`INS_OP_W - 1: 0] oREG_Op,
            output wire[`REG_DAT_W - 1: 0] oREG_Imm,
+           output wire[`REG_DAT_W - 1 : 0] oREG_Pc,
 
            output reg oROB_En,
            output wire[`REG_ADD_W - 1: 0] oROB_Rd,
@@ -42,6 +43,8 @@ assign oREG_Rs2 = rs2;
 assign oREG_Rd = rd;
 assign oREG_Op = op;
 assign oREG_Imm = imm;
+assign oREG_Pc = pc;
+
 assign oROB_Rd = rd;
 assign oROB_Pc = pc;
 
@@ -67,31 +70,38 @@ always@(posedge clk) begin
             rs2 <= ins[24: 20];
             rs1 <= ins[19: 15];
             rd <= ins[11: 7];
-            case (opcode)
+            case (opcode)   // todo case branch 未覆盖全部情况
                 7'b0110111,
                 7'b0010111: begin       // U
                     imm[31: 12] <= ins[31: 12];
                 end
                 7'b1101111: begin       // UJ
-                    imm[20] <= ins[31];
-                    imm[10: 1] <= ins[30: 21];
-                    imm[11] <= ins[20];
-                    imm[19: 12] <= ins[19: 12];
+                    // ! Immediate Operand 需要符号扩展
+                    // ? 也可以用 $signed({ins[19: 12], ins[20], ins[30: 21], 1'b0}), 配合自动补充数据长度来实现
+                    // ? 但是自动补充数据长度属于 warning 行为
+                    imm <= {{12{ins[31]}}, ins[19: 12], ins[20], ins[30: 21], 1'b0};
+                    // imm[20] <= ins[31];
+                    // imm[10: 1] <= ins[30: 21];
+                    // imm[11] <= ins[20];
+                    // imm[19: 12] <= ins[19: 12];
                 end
                 7'b1100111,
                 7'b0000011,
                 7'b0010011: begin       // I
-                    imm[11: 0] <= ins[31: 20];
+                    imm <= {{20{ins[31]}}, ins[31: 20]};
+                    // imm[11: 0] <= ins[31: 20];
                 end
                 7'b1100011: begin       // SB
-                    imm[12] <= ins[31];
-                    imm[10: 5] <= ins[30: 25];
-                    imm[4: 1] <= ins[11: 8];
-                    imm[11] <= ins[7];
+                    imm <= {{19{ins[31]}}, ins[31], ins[7], ins[30: 25], ins[11: 8], 1'b0};
+                    // imm[12] <= ins[31];
+                    // imm[10: 5] <= ins[30: 25];
+                    // imm[4: 1] <= ins[11: 8];
+                    // imm[11] <= ins[7];
                 end
                 7'b0100011: begin       // S
-                    imm[11: 5] <= ins[31: 25];
-                    imm[4: 0] <= ins[11: 7];
+                    imm <= {{20{imm[31]}}, ins[31: 25], ins[11: 7]};
+                    // imm[11: 5] <= ins[31: 25];
+                    // imm[4: 0] <= ins[11: 7];
                 end
                 // R-type Ins has no Imm
             endcase

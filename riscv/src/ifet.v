@@ -15,25 +15,28 @@ module ifet (input wire clk,
 
              output reg oIS_En,
              output wire[`REG_DAT_W - 1: 0] oIS_Pc,
-             output wire[`INS_DAT_W - 1: 0] oIS_Ins
+             output wire[`INS_DAT_W - 1: 0] oIS_Ins,
+
+             input wire iROB_En // todo Stall when ROB is full
             );
-reg[`REG_DAT_W - 1: 0] PC;
+reg[`REG_DAT_W - 1: 0] PC, pcb;  // PC & PC Backup
 reg wIC;    // Waiting for IC
 reg[`INS_DAT_W - 1: 0] INS;
 
 assign oIC_Pc = PC;
 assign oBP_Pc = PC;
+assign oIS_Pc = pcb;
 assign oIS_Ins = INS;
 
 always @(posedge clk) begin
     if (rst) begin
-        PC <= 0;
+        PC <= 0; pcb <= 0;
         wIC <= 0;
         INS <= 0;
         oIC_En <= 0;
         oIS_En <= 0;
     end
-    else if (en) begin
+    else if (en && iROB_En) begin
         if (iBP_En == 1) PC <= iBP_Pcn;
         oIC_En <= 0;
         oIS_En <= 0;
@@ -41,12 +44,20 @@ always @(posedge clk) begin
         if (wIC == 0) begin
             oIC_En <= 1;
             wIC <= 1;
+            pcb <= PC;
         end
         else begin // wIC == 1
             if (iIC_En == 1) begin
                 wIC <= 0;
                 INS <= iIC_Ins;
                 oIS_En <= 1;
+                if (iIC_Ins[6: 0] == 7'b1101111) begin  // ! JAL
+                    PC <= PC + {{12{iIC_Ins[31]}},
+                                iIC_Ins[19: 12],
+                                iIC_Ins[20],
+                                iIC_Ins[30: 21],
+                                1'b0};
+                end
             end
         end
     end
