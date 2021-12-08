@@ -8,8 +8,10 @@ module is(
            input wire en,
 
            input wire iIF_En,
-           input wire[`REG_DAT_W - 1: 0] iIF_Pc,
            input wire[`INS_DAT_W - 1: 0] iIF_Ins,
+           input wire iIF_Bj,
+           input wire[`REG_DAT_W - 1: 0] iIF_Pc,
+           input wire[`REG_DAT_W - 1: 0] iIF_Pjt,
 
            output reg oREG_En,
            output wire[`REG_ADD_W - 1: 0] oREG_Rs1,
@@ -22,9 +24,14 @@ module is(
 
            output reg oROB_En,
            output wire[`REG_ADD_W - 1: 0] oROB_Rd,
-           output wire[`REG_DAT_W - 1: 0] oROB_Pc
+           output wire oROB_Bj,
+           output wire[`REG_DAT_W - 1: 0] oROB_Pc,
+           output wire[`REG_DAT_W - 1: 0] oROB_Pjt
        );
 reg[`REG_DAT_W - 1: 0] pc;
+reg bj;
+reg[`REG_DAT_W - 1: 0] pjt;
+
 reg[`INS_OP_W - 1: 0] op; // Inner Opcode (See README.md)
 reg[`REG_DAT_W - 1: 0] imm;
 reg[`REG_ADD_W - 1: 0] rs1, rs2, rd;
@@ -46,7 +53,9 @@ assign oREG_Imm = imm;
 assign oREG_Pc = pc;
 
 assign oROB_Rd = rd;
+assign oROB_Bj = bj;
 assign oROB_Pc = pc;
+assign oROB_Pjt = pjt;
 
 
 always@(posedge clk) begin
@@ -64,13 +73,20 @@ always@(posedge clk) begin
     if (rst) ;
     else if (en) begin
         if (iIF_En) begin
+            oREG_En <= 1;
+            oROB_En <= 1;
+
+            bj <= iIF_Bj;
             pc <= iIF_Pc;
+            pjt <= iIF_Pjt;
 
             // Operand
             rs2 <= ins[24: 20];
             rs1 <= ins[19: 15];
             rd <= ins[11: 7];
             case (opcode)   // todo case branch 未覆盖全部情况
+                // https://www.intel.com/content/www/us/en/programmable/quartushelp/13.0/mergedProjects/msgs/msgs/wvrfx_l2_veri_incomplete_case_statement.htm
+                // http://www.sunburst-design.com/papers/CummingsSNUG2005Israel_SystemVerilog_UniquePriority.pdf
                 7'b0110111,
                 7'b0010111: begin       // U
                     imm[31: 12] <= ins[31: 12];
@@ -103,11 +119,13 @@ always@(posedge clk) begin
                     // imm[11: 5] <= ins[31: 25];
                     // imm[4: 0] <= ins[11: 7];
                 end
+                default: ;
                 // R-type Ins has no Imm
             endcase
 
             // Inner Opcode
             case (opcode)                // Opcode
+                // ! op == 5'b000000 时为无效指令，不应出现在后续元件中
                 7'b0110111: op <= 5'b00001;         // LUI
                 7'b0010111: op <= 5'b00010;         // AUIPC
                 7'b1101111: op <= 5'b00011;         // JAL
@@ -120,6 +138,7 @@ always@(posedge clk) begin
                         3'b101: op <= 5'b01000;     // BGE
                         3'b110: op <= 5'b01001;     // BLTU
                         3'b111: op <= 5'b01010;     // BGEU
+                        default: op <= 5'b00000;
                     endcase
                 end
                 7'b0000011: begin
@@ -129,6 +148,7 @@ always@(posedge clk) begin
                         3'b010: op <= 5'b0011;      // LW
                         3'b011: op <= 5'b0100;      // LBU
                         3'b100: op <= 5'b0101;      // LHU
+                        default: op <= 5'b00000;
                     endcase
                 end
                 7'b0100011: begin
@@ -136,6 +156,7 @@ always@(posedge clk) begin
                         3'b000: op <= 5'b0110;      // SB
                         3'b001: op <= 5'b0111;      // SH
                         3'b010: op <= 5'b1000;      // SW
+                        default: op <= 5'b00000;
                     endcase
                 end
                 7'b0010011: begin
@@ -168,6 +189,7 @@ always@(posedge clk) begin
                         3'b111: op <= 5'b11101;     // AND
                     endcase
                 end
+                default: op <= 5'b00000;
             endcase
         end
     end

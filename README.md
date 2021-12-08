@@ -1,19 +1,23 @@
-# RISC-V CPU
+# ⛳ RISC-V CPU
 
 
 
-## 简介
+## 🎈 简介
 
 - 一个用 Verilog 编写的 RISC-V CPU, 功能为运行二进制可执行文件
 - 本项目为 ACM 班 20 级大二大作业, 题面见: [RISCV-CPU](https://github.com/ACMClassCourses/RISCV-CPU)
-- 目前进度: `Finish REG & RS`
+- 目前进度: `Finish EX`
 
-## 结构
+
+
+## ✒️ 结构
 
 - Tomasulo's algorithm
 - 设计手稿见 [Design Draft](Design.pdf)
 
-## 说明
+
+
+## 📖 说明
 
 - 题面文件结构说明见 [tutorial.md](tutorial.md)
 - 开发环境 Windows, VS Code, iVerilog, Vivado
@@ -24,7 +28,9 @@
   - VCD 文件浏览器 [`impulse`](https://github.com/toem/impulse.vscode) `v0.3.4`
 - 运行指令详见 [`riscv/my_test.sh`](riscv/my_test.sh)
 
-## 支持指令
+
+
+## 📇 支持指令
 
 > 非完整 RV64I BASE INTEGER INSTRUCTION (51 instructions)，缺少以下指令：
 >
@@ -38,7 +44,7 @@
 | --------- | -------- | -------- | ------- | ------ | ------- | ------------------------------------- |
 | **LUI**   | 00001    | U        | 0110111 |        |         | Load Upper Immediate                  |
 | **AUIPC** | 00010    |          | 0010111 |        |         | Add Upper Immediate to PC             |
-| **JAL**   | 00011    | UJ       | 1101111 |        |         | Jump & Link **(在 IF 阶段实现)**      |
+| **JAL**   | 00011    | UJ       | 1101111 |        |         | Jump & Link **(在 IF 阶段实现跳转)**  |
 | **JALR**  | 00100    | I        | 1100111 |        |         | Jump & Link Register                  |
 | **BEQ**   | 00101    | SB       | 1100011 | 000    |         | Branch Equal                          |
 | **BNE**   | 00110    |          |         | 001    |         | Branch Not Equal                      |
@@ -74,3 +80,17 @@
 | **OR**    | 11100    |          |         | 110    |         | OR                                    |
 | **AND**   | 11101    |          |         | 111    |         | AND                                   |
 
+
+
+## 📝 笔记
+
+- break 语句仅能用于仿真，无法综合
+- case 语句没有覆盖全部可能的输入情况时，会产生可能未预想的寄存器，故多数 linter 会报告 warning。具体说明见资料：
+  - [Verilog HDL Case Statement warning at *<location>*: incomplete case statement has no default case item](https://www.intel.com/content/www/us/en/programmable/quartushelp/13.0/mergedProjects/msgs/msgs/wvrfx_l2_veri_incomplete_case_statement.htm)
+  - [SystemVerilog's priority & unique - A Solution to Verilog's "full_case" & "parallel_case" Evil Twins! by Clifford E. Cummings](http://www.sunburst-design.com/papers/CummingsSNUG2005Israel_SystemVerilog_UniquePriority.pdf)    3.1-3.3 节
+
+
+
+## ⚒️ Todo
+
+- 完成 LSB、ROB

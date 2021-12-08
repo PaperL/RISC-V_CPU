@@ -4,7 +4,8 @@
 /* "findEmpty" and "findExe" will cause a WRONG warning with linter "Verilator":
  * "Signal unoptimizable: Feedback to clock or circular logic: 'rs.findEmpty'"
  * See "https://github.com/verilator/verilator/issues/63"
- * Example:
+ *
+ * Bug Example:
  * module transmit(output out, input in);
  *   wire [1:0] jumper;
  *   assign jumper[1] = in;

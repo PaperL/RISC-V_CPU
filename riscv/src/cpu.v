@@ -2,6 +2,8 @@
 // port modification allowed for debugging purposes
 `include "header.vh"
 
+// ! "cpu.v" of this verison is totally wrong!
+
 module cpu(
            input wire clk,          // System Clock signal
            input wire rst,          // Reset signal
