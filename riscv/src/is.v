@@ -16,20 +16,20 @@ module is(
            output reg oREG_En,
            output wire[`REG_ADD_W - 1: 0] oREG_Rs1,
            output wire[`REG_ADD_W - 1: 0] oREG_Rs2,
-           output reg oREG_EnRd,
            output wire[`REG_ADD_W - 1: 0] oREG_Rd,
            output wire[`INS_OP_W - 1: 0] oREG_Op,
            output wire[`REG_DAT_W - 1: 0] oREG_Imm,
            output wire[`REG_DAT_W - 1 : 0] oREG_Pc,
 
            output reg oROB_En,
+           output wire oROB_Is,
            output wire[`REG_ADD_W - 1: 0] oROB_Rd,
            output wire oROB_Bj,
            output wire[`REG_DAT_W - 1: 0] oROB_Pc,
            output wire[`REG_DAT_W - 1: 0] oROB_Pjt
        );
 reg[`REG_DAT_W - 1: 0] pc;
-reg bj;
+reg is, bj;
 reg[`REG_DAT_W - 1: 0] pjt;
 
 reg[`INS_OP_W - 1: 0] op; // Inner Opcode (See README.md)
@@ -52,6 +52,7 @@ assign oREG_Op = op;
 assign oREG_Imm = imm;
 assign oREG_Pc = pc;
 
+assign oROB_Is = is;
 assign oROB_Rd = rd;
 assign oROB_Bj = bj;
 assign oROB_Pc = pc;
@@ -60,15 +61,13 @@ assign oROB_Pjt = pjt;
 
 always@(posedge clk) begin
     oREG_En <= 0;
-    oREG_EnRd <= 0;
     oROB_En <= 0;
-
     pc <= 0;
+    is <= 0; bj <= 0;
+    pjt <= 0;
     op <= 0;
     imm <= 0;
-    rs1 <= 0;
-    rs2 <= 0;
-    rd <= 0;
+    rs1 <= 0; rs2 <= 0; rd <= 0;
 
     if (rst) ;
     else if (en) begin
@@ -76,54 +75,53 @@ always@(posedge clk) begin
             oREG_En <= 1;
             oROB_En <= 1;
 
+            is <= 0;
             bj <= iIF_Bj;
             pc <= iIF_Pc;
             pjt <= iIF_Pjt;
 
-            // Operand
+            // * Operand
             rs2 <= ins[24: 20];
             rs1 <= ins[19: 15];
             rd <= ins[11: 7];
-            case (opcode)   // todo case branch 未覆盖全部情况
+            case (opcode)
+                // * 关于 case branch 未覆盖全部情况
                 // https://www.intel.com/content/www/us/en/programmable/quartushelp/13.0/mergedProjects/msgs/msgs/wvrfx_l2_veri_incomplete_case_statement.htm
                 // http://www.sunburst-design.com/papers/CummingsSNUG2005Israel_SystemVerilog_UniquePriority.pdf
                 7'b0110111,
                 7'b0010111: begin       // U
                     imm[31: 12] <= ins[31: 12];
+                    rs1 <= 0;
+                    rs2 <= 0;
                 end
                 7'b1101111: begin       // UJ
                     // ! Immediate Operand 需要符号扩展
                     // ? 也可以用 $signed({ins[19: 12], ins[20], ins[30: 21], 1'b0}), 配合自动补充数据长度来实现
                     // ? 但是自动补充数据长度属于 warning 行为
                     imm <= {{12{ins[31]}}, ins[19: 12], ins[20], ins[30: 21], 1'b0};
-                    // imm[20] <= ins[31];
-                    // imm[10: 1] <= ins[30: 21];
-                    // imm[11] <= ins[20];
-                    // imm[19: 12] <= ins[19: 12];
+                    rs1 <= 0;
+                    rs2 <= 0;
                 end
                 7'b1100111,
                 7'b0000011,
                 7'b0010011: begin       // I
                     imm <= {{20{ins[31]}}, ins[31: 20]};
-                    // imm[11: 0] <= ins[31: 20];
+                    rs2 <= 0;
                 end
                 7'b1100011: begin       // SB
                     imm <= {{19{ins[31]}}, ins[31], ins[7], ins[30: 25], ins[11: 8], 1'b0};
-                    // imm[12] <= ins[31];
-                    // imm[10: 5] <= ins[30: 25];
-                    // imm[4: 1] <= ins[11: 8];
-                    // imm[11] <= ins[7];
+                    rd <= 0;
+                    is <= 1;
                 end
                 7'b0100011: begin       // S
                     imm <= {{20{imm[31]}}, ins[31: 25], ins[11: 7]};
-                    // imm[11: 5] <= ins[31: 25];
-                    // imm[4: 0] <= ins[11: 7];
+                    rd <= 0;
+                    is <= 1;
                 end
-                default: ;
-                // R-type Ins has no Imm
+                default: ;              // R-type Ins has no Imm
             endcase
 
-            // Inner Opcode
+            // * Inner Opcode
             case (opcode)                // Opcode
                 // ! op == 5'b000000 时为无效指令，不应出现在后续元件中
                 7'b0110111: op <= 5'b00001;         // LUI

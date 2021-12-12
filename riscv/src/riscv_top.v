@@ -98,9 +98,9 @@ wire						program_finish;
 reg                         q_hci_io_en;
 
 cpu cpu0(
-	.clk_in(clk),
-	.rst_in(rst | program_finish),
-	.rdy_in(cpu_rdy),
+	.clk(clk),
+	.rst(rst | program_finish),
+	.en(cpu_rdy),
 
 	.mem_din(cpu_ram_din),
 	.mem_dout(cpu_ram_dout),

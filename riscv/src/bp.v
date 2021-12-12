@@ -9,18 +9,19 @@ module bp (input wire clk,
 
            input wire[`REG_DAT_W - 1: 0] iIF_Pc,
            output reg oIF_En,
-           output wire[`REG_DAT_W - 1: 0] oIF_Pcn
+           output wire[`REG_DAT_W - 1: 0] oIF_Pjt
           );
-reg[`REG_DAT_W - 1: 0] PCN;
-assign oIF_Pcn = PCN;
+reg[`REG_DAT_W - 1: 0] pjt; // Predicted Jump Target
+
+assign oIF_Pjt = pjt;
 
 always @(posedge clk) begin
     if (rst) begin
-        PCN <= 0;
+        pjt <= 0;
     end
     else if (en) begin
         if (iIC_En) begin
-            PCN <= iIF_Pc + 4;
+            pjt <= iIF_Pc + 4;
             oIF_En <= 1;
         end
         else oIF_En <= 0;

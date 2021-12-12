@@ -53,7 +53,7 @@ reg[`INS_OP_W - 1: 0] op[`RS_S - 1: 0];
 reg[`REG_DAT_W - 1: 0] pc[`RS_S - 1: 0];
 reg[`REG_DAT_W - 1: 0] imm[`RS_S - 1: 0];
 wire exe[`RS_S - 1: 0];  // Executable
-reg ena[`RS_S - 1: 0];  // Enabled
+reg empty[`RS_S - 1: 0];  // Enabled
 
 // * Fine first empty/executable entry
 wire[`RS_ADD_W - 1: 0] findEmpty[`RS_S: 0];
@@ -68,12 +68,12 @@ assign exeAdd = findExe[0];
 genvar j;
 generate
     for (j = 0; j < `RS_S; j = j + 1) begin
-        assign exe[j] = (qs1 == 5'b0) && (qs2 == 5'b0);
+        assign exe[j] = (qs1[j] == 5'b0) && (qs2[j] == 5'b0);
     end
     for (j = 0; j < `RS_S; j = j + 1) begin
-        assign findEmpty[j] = ena[j] ? j : findEmpty[j + 1];
+        assign findEmpty[j] = empty[j] ? j : findEmpty[j + 1];
         assign findExe[j] = exe[j] ? j : findExe[j + 1];
-    end;
+    end
 endgenerate
 
     // * Output to Module EX
@@ -90,13 +90,14 @@ always @(posedge clk) begin
             vs1[i] <= 0; vs2[i] <= 0;
             qs1[i] <= 0; qs2[i] <= 0; qd[i] <= 0;
             op[i] <= 0; pc[i] <= 0;
-            ena[i] <= 0;
+            empty[i] <= 1;
         end
     end
     else if (en) begin
         oEX_En <= 0;
 
         if (iROB_En) begin
+            empty[emptyAdd] <= 0;
             vs1[emptyAdd] <= iROB_Vs1; vs2[emptyAdd] <= iROB_Vs2;
             qs1[emptyAdd] <= iROB_Qs1; qs2[emptyAdd] <= iROB_Qs2;
             qd[emptyAdd] <= iROB_Qd;
@@ -104,7 +105,12 @@ always @(posedge clk) begin
             pc[emptyAdd] <= iROB_Pc;
         end
 
-        if ((exeAdd != 0) || (exe[0] == 1)) oEX_En <= 1;
+        if ((exeAdd != 0) || (exe[0] == 1)) begin
+            // * 存储数据下标为 0..31, 但当无可执行条目时 exeAdd == 0
+            // * 所以 exe[0] 需要特判
+            oEX_En <= 1;
+            empty[exeAdd] <= 1;
+        end
 
         if (iEX_En) begin
             for (k = 0; k < `RS_S; k = k + 1) begin

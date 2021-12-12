@@ -1,4 +1,4 @@
-`include "header.vh"
+`include "header.vh" 
 // Instruction Cache Module
 module ic (input wire clk,
            input wire rst,
@@ -35,6 +35,8 @@ assign oIF_Ins = ins;
 always @(posedge clk) begin
     if (rst) begin
         cnt <= 0;
+        reading <= 0; addr <= 0;
+        out <= 0; ins <= 0;
     end
     else if (en) begin
         reading <= 0;
@@ -45,7 +47,7 @@ always @(posedge clk) begin
             addr <= iIF_Pc;
             reading <= 1;
         end
-        if (cnt != 0) begin
+        else if (cnt != 0) begin
             if (iMC_En) begin
                 reading <= 1;
                 cnt <= cnt + 1;
@@ -54,13 +56,14 @@ always @(posedge clk) begin
                     1: ins[7: 0] <= iMC_Dat;
                     2: ins[15: 8] <= iMC_Dat;
                     3: ins[23: 16] <= iMC_Dat;
-                    4: begin
-                        ins[31: 24] <= iMC_Dat;
-                        reading <= 0;
-                        cnt <= 0;
-                        out <= 1;
-                    end
+                    4: ins[31: 24] <= iMC_Dat;
+                    default: ;
                 endcase
+                if (cnt == 4) begin // Finish
+                    reading <= 0;
+                    cnt <= 0;
+                    out <= 1;
+                end
             end
         end
     end

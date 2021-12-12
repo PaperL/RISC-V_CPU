@@ -6,7 +6,7 @@
 
 - 一个用 Verilog 编写的 RISC-V CPU, 功能为运行二进制可执行文件
 - 本项目为 ACM 班 20 级大二大作业, 题面见: [RISCV-CPU](https://github.com/ACMClassCourses/RISCV-CPU)
-- 目前进度: `Finish EX`
+- 目前进度: `Debugging`
 
 
 
@@ -84,6 +84,7 @@
 
 ## 📝 笔记
 
+- always 块中多次赋值给同一寄存器，生效顺序同语句先后顺序
 - break 语句仅能用于仿真，无法综合
 - case 语句没有覆盖全部可能的输入情况时，会产生可能未预想的寄存器，故多数 linter 会报告 warning。具体说明见资料：
   - [Verilog HDL Case Statement warning at *<location>*: incomplete case statement has no default case item](https://www.intel.com/content/www/us/en/programmable/quartushelp/13.0/mergedProjects/msgs/msgs/wvrfx_l2_veri_incomplete_case_statement.htm)
@@ -93,4 +94,5 @@
 
 ## ⚒️ Todo
 
-- 完成 LSB、ROB
+- 仿真 Debug
+

@@ -14,6 +14,10 @@
 `define INS_DAT_W 32
 `define INS_OP_W 5
 
+// FIFO
+`define FIFO_S 32
+`define FIFO_ADD_W 5
+
 // Reordered Buffer
 `define ROB_S 32
 `define ROB_ADD_W 5
