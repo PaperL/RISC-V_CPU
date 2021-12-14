@@ -1,16 +1,16 @@
 // RISCV32I CPU top module
 `include "header.vh"
 module cpu(
-           input wire clk,                                                                 // System Clock signal
-           input wire rst,                                                                 // Reset signal
-           input wire en,                                                                  // Enabled signal, pause cpu when low
+           input wire clk,                       // System Clock signal
+           input wire rst,                       // Reset signal
+           input wire en,                        // Enabled signal, pause cpu when low
 
-           input wire[7 : 0] mem_din,                                                      // data input bus
-           output wire[7 : 0] mem_dout,                                                   // data output bus
-           output wire[31 : 0] mem_a,                                                      // address bus (only 17:0 is used)
-           output wire mem_wr,                                                             // write/read signal (1 for write)
+           input wire[7 : 0] mem_din,            // data input bus
+           output wire[7 : 0] mem_dout,          // data output bus
+           output wire[31 : 0] mem_a,            // address bus (only 17:0 is used)
+           output wire mem_wr,                   // write/read signal (1 for write)
 
-           input wire io_buffer_full,                                                      // 1 if uart buffer is full
+           input wire io_buffer_full,            // 1 if uart buffer is full
 
            output wire[31 : 0] dbgreg_dout  // cpu register output (debugging demo)
        );
@@ -25,21 +25,25 @@ module cpu(
 // - 0x30004 read: read clocks passed since cpu starts (in dword, 4 bytes)
 // - 0x30004 write: indicates program stop (will output '\0' through uart tx)
 
-// RAM
-wire [`MEM_DAT_W - 1: 0] RAM_MC_Dat;
 // MC
-wire MC_IC_En; wire[`MEM_DAT_W - 1 : 0] MC_IC_Dat;
-wire MC_DC_En; wire[`MEM_DAT_W - 1 : 0] MC_DC_Dat;
+wire MC_IC_En; wire[`REG_DAT_W - 1 : 0] MC_IC_Ins;
+wire MC_DC_En; wire[`REG_DAT_W - 1 : 0] MC_DC_Dat;
+
 wire MC_RAM_Rw;
-wire[16: 0]MC_RAM_Add; wire [`MEM_DAT_W - 1: 0] MC_RAM_Dat;
+wire[`MEM_ADD_W - 1: 0] MC_RAM_Add;
+wire[`MEM_DAT_W - 1: 0] MC_RAM_Dat; wire[`MEM_DAT_W - 1: 0] RAM_MC_Dat;
+assign mem_wr = MC_RAM_Rw;
+assign mem_a = MC_RAM_Add;
+assign mem_dout = MC_RAM_Dat; assign RAM_MC_Dat = mem_din;
+
 // IC
 wire IC_IF_En; wire[`INS_DAT_W - 1: 0] IC_IF_Ins;
-wire IC_MC_En; wire[`MEM_ADD_W - 1: 0] IC_MC_Add;
+wire IC_MC_En; wire[`MEM_ADD_W - 1: 0] IC_MC_Pc;
 wire IC_BP_En; wire[`INS_DAT_W - 1: 0] IC_BP_Ins;
 // DC
 wire DC_LSB_En; wire[`REG_DAT_W - 1: 0] DC_LSB_Dat;
-wire DC_MC_En; wire DC_MC_Rw;
-wire[`MEM_ADD_W - 1: 0] DC_MC_Add; wire[`MEM_DAT_W - 1: 0] DC_MC_Dat;
+wire DC_MC_En; wire DC_MC_Rw; wire[2: 0] DC_MC_Len;
+wire[`MEM_ADD_W - 1: 0] DC_MC_Add; wire[`REG_DAT_W - 1: 0] DC_MC_Dat;
 // BP
 wire BP_IF_En;
 wire[`REG_DAT_W - 1: 0] BP_IF_Pjt;
@@ -53,6 +57,7 @@ wire IS_REG_En;
 wire[`REG_ADD_W - 1: 0] IS_REG_Rs1, IS_REG_Rs2, IS_REG_Rd;
 wire[`INS_OP_W - 1: 0] IS_REG_Op;
 wire[`REG_DAT_W - 1: 0] IS_REG_Imm, IS_REG_Pc;
+wire IS_REG_Ils;
 wire IS_ROB_En, IS_ROB_Is;
 wire[`REG_ADD_W - 1: 0] IS_ROB_Rd;
 wire IS_ROB_Bj;
@@ -64,6 +69,7 @@ wire[`REG_DAT_W - 1: 0] REG_ROB_Vs1, REG_ROB_Vs2;
 wire[`ROB_ADD_W - 1: 0] REG_ROB_Qd;
 wire[`INS_OP_W - 1: 0] REG_ROB_Op;
 wire[`REG_DAT_W - 1: 0] REG_ROB_Pc, REG_ROB_Imm;
+wire REG_ROB_Ils;
 // RS
 wire RS_EX_En;
 wire[`INS_OP_W - 1: 0] RS_EX_Op;
@@ -104,26 +110,21 @@ wire[`ROB_ADD_W - 1: 0] ROB_REG_Qn;
 wire ROB_REG_En;
 wire[`REG_ADD_W - 1: 0] ROB_REG_Rd;
 wire[`REG_DAT_W - 1: 0] ROB_REG_Vd;
-wire ROB_Mp;        // tod
+wire ROB_Mp;        // todo
 wire[`REG_DAT_W - 1: 0] ROB_IF_Rpc;
 wire ROB_IF_Full;
 
-ram RAM( clk, en,
-         MC_RAM_Rw, MC_RAM_Add, MC_RAM_Dat,
-         RAM_MC_Dat
-       );
-
 mc MC( clk, rst, en,
 
-       IC_MC_En, IC_MC_Add,
-       MC_IC_En, MC_IC_Dat,
+       IC_MC_En, IC_MC_Pc,
+       MC_IC_En, MC_IC_Ins,
 
-       DC_MC_En, DC_MC_Rw,
+       DC_MC_En, DC_MC_Rw, DC_MC_Len,
        DC_MC_Add, DC_MC_Dat,
        MC_DC_En, MC_DC_Dat,
 
-       MC_RAM_Rw, MC_RAM_Add, MC_RAM_Dat,
-       RAM_MC_Dat
+       MC_RAM_Rw, MC_RAM_Add,
+       MC_RAM_Dat, RAM_MC_Dat
      );
 
 
@@ -132,19 +133,19 @@ ic IC( clk, rst, en,
        IF_IC_En, IF_IC_Pc,
        IC_IF_En, IC_IF_Ins,
 
-       IC_MC_En, IC_MC_Add,
-       MC_IC_En, MC_IC_Dat,
+       IC_MC_En, IC_MC_Pc,
+       MC_IC_En, MC_IC_Ins,
 
        IC_BP_En, IC_BP_Ins
      );
 
 dc DC( clk, rst, en,
 
-       LSB_DC_En, LSB_DC_Rw,
-       LSB_DC_Len, LSB_DC_Add, LSB_DC_Dat,
+       LSB_DC_En, LSB_DC_Rw, LSB_DC_Len,
+       LSB_DC_Add, LSB_DC_Dat,
        DC_LSB_En, DC_LSB_Dat,
 
-       DC_MC_En, DC_MC_Rw,
+       DC_MC_En, DC_MC_Rw, DC_MC_Len,
        DC_MC_Add, DC_MC_Dat,
        MC_DC_En, MC_DC_Dat
      );
@@ -181,6 +182,7 @@ is IS( clk, rst | ROB_Mp, en,
        IS_REG_En,
        IS_REG_Rs1, IS_REG_Rs2, IS_REG_Rd,
        IS_REG_Op, IS_REG_Imm, IS_REG_Pc,
+       IS_REG_Ils,
 
        IS_ROB_En, IS_ROB_Is,
        IS_ROB_Rd,
@@ -190,14 +192,15 @@ is IS( clk, rst | ROB_Mp, en,
 regfile REG( clk, rst, en,
 
              IS_REG_En,
-             IS_REG_Rs1, IS_REG_Rs1, IS_REG_Rd,
+             IS_REG_Rs1, IS_REG_Rs2, IS_REG_Rd,
              IS_REG_Op, IS_REG_Imm, IS_REG_Pc,
+             IS_REG_Ils,
 
              ROB_REG_Qn,
              ROB_REG_En, ROB_REG_Rd, ROB_REG_Vd,
              REG_ROB_En,
              REG_ROB_Qs1, REG_ROB_Qs2, REG_ROB_Vs1, REG_ROB_Vs2, REG_ROB_Qd,
-             REG_ROB_Op, REG_ROB_Pc, REG_ROB_Imm,
+             REG_ROB_Op, REG_ROB_Pc, REG_ROB_Imm, REG_ROB_Ils,
 
              ROB_Mp
            );
@@ -262,8 +265,8 @@ rob ROB(clk, rst, en,
         IS_ROB_Bj, IS_ROB_Pc, IS_ROB_Pjt,
 
         REG_ROB_En,
-        REG_ROB_Qs1, REG_ROB_Qs2, REG_ROB_Vs2, REG_ROB_Vs2, REG_ROB_Qd,
-        REG_ROB_Op, REG_ROB_Pc, REG_ROB_Imm,
+        REG_ROB_Qs1, REG_ROB_Qs2, REG_ROB_Vs1, REG_ROB_Vs2, REG_ROB_Qd,
+        REG_ROB_Op, REG_ROB_Pc, REG_ROB_Imm, REG_ROB_Ils,
 
         ROB_RS_En,
         ROB_RS_Op, ROB_RS_Pc, ROB_RS_Imm,

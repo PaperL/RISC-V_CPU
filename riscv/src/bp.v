@@ -18,6 +18,7 @@ assign oIF_Pjt = pjt;
 always @(posedge clk) begin
     if (rst) begin
         pjt <= 0;
+        oIF_En <= 0;
     end
     else if (en) begin
         if (iIC_En) begin
@@ -26,10 +27,6 @@ always @(posedge clk) begin
         end
         else oIF_En <= 0;
     end
-end
-
-initial begin
-    oIF_En = 1;
 end
 
 endmodule

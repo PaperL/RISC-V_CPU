@@ -22,6 +22,7 @@ module rob (
            input wire[`INS_OP_W - 1: 0] iREG_Op,
            input wire[`REG_DAT_W - 1: 0] iREG_Pc,
            input wire[`REG_DAT_W - 1: 0] iREG_Imm,
+           input wire iREG_Ils,
 
 
            output reg oRS_En,
@@ -50,7 +51,7 @@ module rob (
            input wire[`REG_DAT_W - 1: 0] iEX_Jt,
 
            // Commit
-           output reg oLSB_Cs,                 // Commit Store
+           output reg oLSB_Cs,                            // Commit Store
            input wire iLSB_En,
            input wire[`ROB_ADD_W - 1: 0] iLSB_Qd,
            input wire[`REG_DAT_W - 1: 0] iLSB_Vd,
@@ -61,8 +62,8 @@ module rob (
            output reg[`REG_DAT_W - 1: 0] oREG_Vd,
 
            // Branch / JUMP
-           output wire oMp,                                  // Misprediction
-           output wire[`REG_DAT_W - 1: 0] oIF_Rpc,
+           output wire oMp,                                             // Misprediction
+           output reg[`REG_DAT_W - 1: 0] oIF_Rpc,
 
            // Full
            output wire oIF_Full
@@ -111,7 +112,6 @@ assign oRS_Vs2 = oVs2; assign oLSB_Vs2 = oVs2;
 assign oRS_Qd = oQd; assign oLSB_Qd = oQd;
 
 assign oMp = mp;
-assign oIF_Rpc = headJt;
 
 assign oIF_Full = full;
 
@@ -138,6 +138,8 @@ always @(posedge clk) begin
         oRS_En <= 0;
         oLSB_En <= 0; oLSB_Cs <= 0;
         oREG_En <= 0; oREG_Rd <= 0; oREG_Vd <= 0;
+
+        oIF_Rpc <= 0;
     end
     else if (en) begin
         mp <= 0;
@@ -148,13 +150,13 @@ always @(posedge clk) begin
 
         // Update LOAD or Arith Result
         if (iLSB_En) begin
-            rdy[iLSB_Qd] = 1;
-            vd[iLSB_Qd] = iLSB_Vd;
+            rdy[iLSB_Qd] <= 1;
+            vd[iLSB_Qd] <= iLSB_Vd;
         end
         if (iEX_En) begin
-            rdy[iEX_Qd] = 1;
-            vd[iEX_Qd] = iEX_Vd;
-            jt[iEX_Qd] = iEX_Jt;
+            rdy[iEX_Qd] <= 1;
+            vd[iEX_Qd] <= iEX_Vd;
+            jt[iEX_Qd] <= iEX_Jt;
         end
 
         // New Instruction used current available Q
@@ -171,51 +173,76 @@ always @(posedge clk) begin
 
             tail <= nxtTail;    // * Push tail
             full <= (nxtTail == head) ? 1 : 0;
+            empty <= 0;
         end
 
         // Ready to commit first instruction
-        if (rdy[head]) begin
-            if (is[head]) begin  // Commit STORE
+        if (!empty) begin
+            if (is[head]) begin // Commit STORE
+                // Nothing is needed for STORE to commit, so STORE needn't "rdy" signal
                 oLSB_Cs <= 1;
+                head <= nxtHead;    // * Pop front
+                empty <= (nxtHead == tail) ? 1 : 0;
+                full <= 0;
             end
-            else if (bj[head]) begin  // Commit BRANCH or JUMP
-                if (headJt != pjt[head])  // ! Misprediction
-                    mp <= 1;
-            end
-            else begin  // Commit Arith Instruction
-                oREG_En <= 1;
-                oREG_Rd <= rd[head];
-                oREG_Vd <= vd[head];
-            end
+            else if (rdy[head]) begin
+                if (bj[head]) begin  // Commit BRANCH or JUMP
+                    if (headJt != pjt[head]) begin  // ! Misprediction
+                        mp <= 1;
+                        oIF_Rpc <= headJt;
+                    end
+                end
+                else begin  // Commit Arith Instruction
+                    oREG_En <= 1;
+                    oREG_Rd <= rd[head];
+                    oREG_Vd <= vd[head];
+                end
 
-            head <= nxtHead;    // * Pop front
-            empty <= (nxtHead == tail) ? 1 : 0;
+                head <= nxtHead;    // * Pop front
+                empty <= (nxtHead == tail) ? 1 : 0;
+                full <= 0;
+            end
         end
 
         // Update instruction information from REG
         if (iREG_En) begin
-            oRS_En <= 1;
-            oLSB_En <= 1;
+            oRS_En <= ~iREG_Ils;
+            oLSB_En <= iREG_Ils;
 
             oOp <= iREG_Op;
             oPc <= iREG_Pc;
             oImm <= iREG_Imm;
 
-            if (rdy[iREG_Qs1]) begin
-                oQs1 <= 0;
-                oVs1 <= vd[iREG_Qs1];
+            oQs1 <= iREG_Qs1; oVs1 <= iREG_Vs1;
+            oQs2 <= iREG_Qs2; oVs2 <= iREG_Vs2;
+
+            if (iREG_Qs1 != 0) begin
+                if (iEX_En && iEX_Qd == iREG_Qs1) begin
+                    oQs1 <= 0;
+                    oVs1 <= iEX_Vd;
+                end
+                else if (iLSB_En && iLSB_Qd == iREG_Qs1) begin
+                    oQs1 <= 0;
+                    oVs1 <= iLSB_Vd;
+                end
+                else if (rdy[iREG_Qs1]) begin
+                    oQs1 <= 0;
+                    oVs1 <= vd[iREG_Qs1];
+                end
             end
-            else begin
-                oQs1 <= iREG_Qs1;
-                oVs1 <= iREG_Vs1;
-            end
-            if (rdy[iREG_Qs2]) begin
-                oQs2 <= 0;
-                oVs2 <= vd[iREG_Qs2];
-            end
-            else begin
-                oQs2 <= iREG_Qs2;
-                oVs2 <= iREG_Vs2;
+            if (iREG_Qs2 != 0) begin
+                if (iEX_En && iEX_Qd == iREG_Qs2) begin
+                    oQs2 <= 0;
+                    oVs2 <= iEX_Vd;
+                end
+                else if (iLSB_En && iLSB_Qd == iREG_Qs2) begin
+                    oQs2 <= 0;
+                    oVs2 <= iLSB_Vd;
+                end
+                else if (rdy[iREG_Qs2]) begin
+                    oQs2 <= 0;
+                    oVs2 <= vd[iREG_Qs2];
+                end
             end
 
             oQd <= iREG_Qd;

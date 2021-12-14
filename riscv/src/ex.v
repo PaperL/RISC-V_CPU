@@ -71,7 +71,7 @@ always @(posedge clk) begin
                     v <= imm;
                 5'b00010:                       // AUIPC
                     v <= pc + imm;
-                5'b00100:                       // JALR
+                5'b00011, 5'b00100:             // JAL, JALR
                     v <= pc + 4;
                 5'b01011:                       // ADDI
                     v <= vs1 + imm;
@@ -111,6 +111,7 @@ always @(posedge clk) begin
                     v <= vs1 | vs2;
                 5'b11101:                       // AND
                     v <= vs1 & vs2;
+                default: ;
             endcase
 
             // Jump
@@ -129,6 +130,7 @@ always @(posedge clk) begin
                     jt <= (vs1 < vs2) ? (pc + imm) : pc + 4;
                 5'b01010:   // BGEU
                     jt <= (vs1 > vs2) ? (pc + imm) : pc + 4;
+                default: ;
             endcase
         end
     end

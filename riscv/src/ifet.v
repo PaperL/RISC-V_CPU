@@ -73,13 +73,13 @@ always @(posedge clk) begin
                     case (opcode)
                         7'b1100011:             // Branch
                             status <= 2;
-                        7'b1101111: begin  // ! JAL
+                        7'b1101111: begin   // ! JAL
                             status <= 0;
                             oIS_En <= 1;
-                            bj <= 1;    // todo 可以设为 0 反正后面不用担心出问题
+                            bj <= 0;        // ! 后面不考虑 JAL 故此处必须为 0
                             PC <= JalJt;
                         end
-                        default: begin  // JALR or other
+                        default: begin  // JALR or BRANCH or other
                             status <= 0;
                             oIS_En <= 1;
                             bj <= (opcode == 7'b1100111) ? 1 : 0;
@@ -91,6 +91,7 @@ always @(posedge clk) begin
             2: begin    // Waiting for BP
                 status <= 0;
                 oIS_En <= 1;
+                bj <= 1;
                 PC <= iBP_Pjt;
             end
         endcase

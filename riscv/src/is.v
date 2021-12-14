@@ -20,6 +20,7 @@ module is(
            output wire[`INS_OP_W - 1: 0] oREG_Op,
            output wire[`REG_DAT_W - 1: 0] oREG_Imm,
            output wire[`REG_DAT_W - 1 : 0] oREG_Pc,
+           output wire oREG_Ils,
 
            output reg oROB_En,
            output wire oROB_Is,
@@ -29,7 +30,7 @@ module is(
            output wire[`REG_DAT_W - 1: 0] oROB_Pjt
        );
 reg[`REG_DAT_W - 1: 0] pc;
-reg is, bj;
+reg ils, is, bj;            // ils: Is Load or Store, bj: Is Branch or Jump
 reg[`REG_DAT_W - 1: 0] pjt;
 
 reg[`INS_OP_W - 1: 0] op; // Inner Opcode (See README.md)
@@ -51,6 +52,7 @@ assign oREG_Rd = rd;
 assign oREG_Op = op;
 assign oREG_Imm = imm;
 assign oREG_Pc = pc;
+assign oREG_Ils = ils;
 
 assign oROB_Is = is;
 assign oROB_Rd = rd;
@@ -63,7 +65,7 @@ always@(posedge clk) begin
     oREG_En <= 0;
     oROB_En <= 0;
     pc <= 0;
-    is <= 0; bj <= 0;
+    ils <= 0; is <= 0; bj <= 0;
     pjt <= 0;
     op <= 0;
     imm <= 0;
@@ -75,8 +77,9 @@ always@(posedge clk) begin
             oREG_En <= 1;
             oROB_En <= 1;
 
+            ils <= 0;
             is <= 0;
-            bj <= iIF_Bj;
+            bj <= iIF_Bj;   // ! "is BRANCH or JUMP" is managed in IF
             pc <= iIF_Pc;
             pjt <= iIF_Pjt;
 
@@ -108,15 +111,14 @@ always@(posedge clk) begin
                     imm <= {{20{ins[31]}}, ins[31: 20]};
                     rs2 <= 0;
                 end
-                7'b1100011: begin       // SB
+                7'b1100011: begin       // SB for BRANCH
                     imm <= {{19{ins[31]}}, ins[31], ins[7], ins[30: 25], ins[11: 8], 1'b0};
                     rd <= 0;
-                    is <= 1;
                 end
-                7'b0100011: begin       // S
+                7'b0100011: begin       // S for STORE
                     imm <= {{20{imm[31]}}, ins[31: 25], ins[11: 7]};
                     rd <= 0;
-                    is <= 1;
+                    ils <= 1; is <= 1;  // ! is STORE
                 end
                 default: ;              // R-type Ins has no Imm
             endcase
@@ -140,12 +142,13 @@ always@(posedge clk) begin
                     endcase
                 end
                 7'b0000011: begin
+                    ils <= 1;   // ! is LOAD
                     case (funct3)
                         3'b000: op <= 5'b0001;      // LB
                         3'b001: op <= 5'b0010;      // LH
                         3'b010: op <= 5'b0011;      // LW
-                        3'b011: op <= 5'b0100;      // LBU
-                        3'b100: op <= 5'b0101;      // LHU
+                        3'b100: op <= 5'b0100;      // LBU
+                        3'b101: op <= 5'b0101;      // LHU
                         default: op <= 5'b00000;
                     endcase
                 end
