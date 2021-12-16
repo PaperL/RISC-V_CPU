@@ -4,16 +4,16 @@
 
 ## 🎈 简介
 
-- 一个用 Verilog 编写的 RISC-V CPU, 功能为运行二进制可执行文件
+- 一个用 Verilog 编写的 RISC-V CPU, 功能为运行 RISC-V 可执行文件
 - 本项目为 ACM 班 20 级大二大作业, 题面见: [RISCV-CPU](https://github.com/ACMClassCourses/RISCV-CPU)
-- 目前进度: `Hello World`
+- 目前进度: `gcd`
 
 
 
 ## ✒️ 结构
 
 - Tomasulo's algorithm
-- 设计手稿见 [Design Draft](Design.pdf)
+- 设计手稿见 [Circuit Design](Design.pdf)*（上传为 PDF 文件导致 Repo 较大）*
 
 
 
@@ -89,10 +89,13 @@
 - case 语句没有覆盖全部可能的输入情况时，会产生可能未预想的寄存器，故多数 linter 会报告 warning。具体说明见资料：
   - [Verilog HDL Case Statement warning at *<location>*: incomplete case statement has no default case item](https://www.intel.com/content/www/us/en/programmable/quartushelp/13.0/mergedProjects/msgs/msgs/wvrfx_l2_veri_incomplete_case_statement.htm)
   - [SystemVerilog's priority & unique - A Solution to Verilog's "full_case" & "parallel_case" Evil Twins! by Clifford E. Cummings](http://www.sunburst-design.com/papers/CummingsSNUG2005Israel_SystemVerilog_UniquePriority.pdf)    3.1-3.3 节
+- 使用模拟程序对拍 Register 和 Memory 写入操作能有效 Debug
 
 
 
 ## ⚒️ Todo
 
-- MC 部件依旧有错，判断依据为执行 LS 时，会导致正在读取的指令得到错误结果
+- 实现 LSB 精确中断
+- 实现 Instruction Cache 和 Data Cache
+- 实现 Branch Prediction
 

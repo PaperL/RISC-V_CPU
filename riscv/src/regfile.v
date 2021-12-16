@@ -16,6 +16,7 @@ module regfile(input wire clk,
                input wire[`ROB_ADD_W - 1: 0] iROB_Qn,
                input wire iROB_En,
                input wire[`REG_ADD_W - 1: 0] iROB_Rd,
+               input wire[`FIFO_ADD_W - 1: 0] iROB_Qd,
                input wire[`REG_DAT_W - 1: 0] iROB_Vd,
                output reg oROB_En,
                output reg[`ROB_ADD_W - 1: 0] oROB_Qs1,
@@ -37,6 +38,8 @@ reg[`ROB_ADD_W - 1: 0] q[`REG_S - 1: 0];
 
 // todo Debug
 wire[`REG_DAT_W - 1: 0] regA0; assign regA0 = v[10];
+
+// wire[`FIFO_ADD_W-1:0] qS0 = q[8];
 
 integer i;
 always@(posedge clk) begin
@@ -74,6 +77,7 @@ always@(posedge clk) begin
 
         if (iROB_En) begin
             v[iROB_Rd] <= iROB_Vd;
+            if(q[iROB_Rd] == iROB_Qd) q[iROB_Rd] <= 0;
             // oROB_Vs is logic circuit,
             // so when commit_rd == new_ins_rs, output_vs = input_vd
         end

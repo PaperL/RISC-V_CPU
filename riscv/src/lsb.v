@@ -68,9 +68,9 @@ genvar j;
 generate
     for (j = 0; j < `FIFO_S; j = j + 1) begin
         assign exe[j] = (qs1[j] == 5'b0) && (qs2[j] == 5'b0);
-        assign ls[j] = ((iROB_Op == 5'b0110) ||
-                        (iROB_Op == 5'b0111) ||
-                        (iROB_Op == 5'b1000)) ? 1 : 0;
+        assign ls[j] = ((op[j] == 5'b0110) ||
+                        (op[j] == 5'b0111) ||
+                        (op[j] == 5'b1000)) ? 1 : 0;
     end
     endgenerate
 
@@ -181,7 +181,7 @@ always @(posedge clk) begin
 
             tail <= nxtTail;    // * Push tail
             full <= (nxtTail == head) ? 1 : 0;
-            empty <= 0;
+            if (!iDC_En) empty <= 0;
         end
 
         if (iDC_En) begin   // LS finished, pop front and output load result
@@ -205,7 +205,7 @@ always @(posedge clk) begin
 
             head <= nxtHead;        // * Pop front
             empty <= (nxtHead == tail) ? 1 : 0;
-            full <= 0;
+            if (!iROB_En) full <= 0;
         end
 
         // * Handle front LS;

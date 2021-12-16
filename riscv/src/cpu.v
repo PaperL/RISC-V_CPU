@@ -1,16 +1,16 @@
 // RISCV32I CPU top module
 `include "header.vh"
 module cpu(
-           input wire clk,                       // System Clock signal
-           input wire rst,                       // Reset signal
-           input wire en,                        // Enabled signal, pause cpu when low
+           input wire clk,                         // System Clock signal
+           input wire rst,                         // Reset signal
+           input wire en,                          // Enabled signal, pause cpu when low
 
-           input wire[7 : 0] mem_din,            // data input bus
-           output wire[7 : 0] mem_dout,          // data output bus
-           output wire[31 : 0] mem_a,            // address bus (only 17:0 is used)
-           output wire mem_wr,                   // write/read signal (1 for write)
+           input wire[7 : 0] mem_din,              // data input bus
+           output wire[7 : 0] mem_dout,            // data output bus
+           output wire[31 : 0] mem_a,              // address bus (only 17:0 is used)
+           output wire mem_wr,                     // write/read signal (1 for write)
 
-           input wire io_buffer_full,            // 1 if uart buffer is full
+           input wire io_buffer_full,              // 1 if uart buffer is full
 
            output wire[31 : 0] dbgreg_dout  // cpu register output (debugging demo)
        );
@@ -109,6 +109,7 @@ wire ROB_LSB_Cs;
 wire[`ROB_ADD_W - 1: 0] ROB_REG_Qn;
 wire ROB_REG_En;
 wire[`REG_ADD_W - 1: 0] ROB_REG_Rd;
+wire[`FIFO_ADD_W - 1: 0] ROB_REG_Qd;
 wire[`REG_DAT_W - 1: 0] ROB_REG_Vd;
 wire ROB_Mp;        // todo
 wire[`REG_DAT_W - 1: 0] ROB_IF_Rpc;
@@ -197,7 +198,8 @@ regfile REG( clk, rst, en,
              IS_REG_Ils,
 
              ROB_REG_Qn,
-             ROB_REG_En, ROB_REG_Rd, ROB_REG_Vd,
+             ROB_REG_En,
+             ROB_REG_Rd, ROB_REG_Qd, ROB_REG_Vd,
              REG_ROB_En,
              REG_ROB_Qs1, REG_ROB_Qs2, REG_ROB_Vs1, REG_ROB_Vs2, REG_ROB_Qd,
              REG_ROB_Op, REG_ROB_Pc, REG_ROB_Imm, REG_ROB_Ils,
@@ -283,7 +285,8 @@ rob ROB(clk, rst, en,
         LSB_ROB_En, LSB_ROB_Qd, LSB_ROB_Vd,
 
         ROB_REG_Qn,
-        ROB_REG_En, ROB_REG_Rd, ROB_REG_Vd,
+        ROB_REG_En,
+        ROB_REG_Rd, ROB_REG_Qd, ROB_REG_Vd,
 
         ROB_Mp,
         ROB_IF_Rpc,

@@ -51,7 +51,7 @@ module rob (
            input wire[`REG_DAT_W - 1: 0] iEX_Jt,
 
            // Commit
-           output reg oLSB_Cs,                            // Commit Store
+           output reg oLSB_Cs,                                 // Commit Store
            input wire iLSB_En,
            input wire[`ROB_ADD_W - 1: 0] iLSB_Qd,
            input wire[`REG_DAT_W - 1: 0] iLSB_Vd,
@@ -59,10 +59,11 @@ module rob (
            output wire[`ROB_ADD_W - 1: 0] oREG_Qn,
            output reg oREG_En,
            output reg[`REG_ADD_W - 1: 0] oREG_Rd,
+           output reg[`FIFO_ADD_W - 1: 0] oREG_Qd,
            output reg[`REG_DAT_W - 1: 0] oREG_Vd,
 
            // Branch / JUMP
-           output wire oMp,                                             // Misprediction
+           output wire oMp,                                                  // Misprediction
            output reg[`REG_DAT_W - 1: 0] oIF_Rpc,
 
            // Full
@@ -137,7 +138,8 @@ always @(posedge clk) begin
 
         oRS_En <= 0;
         oLSB_En <= 0; oLSB_Cs <= 0;
-        oREG_En <= 0; oREG_Rd <= 0; oREG_Vd <= 0;
+        oREG_En <= 0;
+        oREG_Rd <= 0; oREG_Qd <= 0; oREG_Vd <= 0;
 
         oIF_Rpc <= 0;
     end
@@ -173,19 +175,21 @@ always @(posedge clk) begin
 
             tail <= nxtTail;    // * Push tail
             full <= (nxtTail == head) ? 1 : 0;
-            empty <= 0;
+            if (!(!empty && (is[head] || rdy[head]))) empty <= 0;
         end
 
         // Ready to commit first instruction
         if (!empty) begin
             if (is[head]) begin // Commit STORE
+                // $display("%0h", pc[head]);
                 // Nothing is needed for STORE to commit, so STORE needn't "rdy" signal
                 oLSB_Cs <= 1;
                 head <= nxtHead;    // * Pop front
                 empty <= (nxtHead == tail) ? 1 : 0;
-                full <= 0;
+                if (!iIS_En) full <= 0;
             end
             else if (rdy[head]) begin
+                // $display("%0h", pc[head]);
                 if (bj[head]) begin  // Commit BRANCH or JUMP
                     if (headJt != pjt[head]) begin  // ! Misprediction
                         mp <= 1;
@@ -194,13 +198,13 @@ always @(posedge clk) begin
                 end
                 else begin  // Commit Arith Instruction
                     oREG_En <= 1;
-                    oREG_Rd <= rd[head];
-                    oREG_Vd <= vd[head];
+                    oREG_Rd <= rd[head]; oREG_Qd <= head; oREG_Vd <= vd[head];
+                    // $display("reg[%0h] %0h", rd[head], vd[head]);
                 end
 
                 head <= nxtHead;    // * Pop front
                 empty <= (nxtHead == tail) ? 1 : 0;
-                full <= 0;
+                if (!iIS_En) full <= 0;
             end
         end
 

@@ -2,3 +2,4 @@ riscv/test/
 *.o
 *.vcd
 .VSCodeCounter/
+*copy*

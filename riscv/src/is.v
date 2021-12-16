@@ -116,7 +116,7 @@ always@(posedge clk) begin
                     rd <= 0;
                 end
                 7'b0100011: begin       // S for STORE
-                    imm <= {{20{imm[31]}}, ins[31: 25], ins[11: 7]};
+                    imm <= {{20{ins[31]}}, ins[31: 25], ins[11: 7]};
                     rd <= 0;
                     ils <= 1; is <= 1;  // ! is STORE
                 end
