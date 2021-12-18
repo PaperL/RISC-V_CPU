@@ -1,16 +1,16 @@
 // RISCV32I CPU top module
 `include "header.vh"
 module cpu(
-           input wire clk,                         // System Clock signal
-           input wire rst,                         // Reset signal
-           input wire en,                          // Enabled signal, pause cpu when low
+           input wire clk,                           // System Clock signal
+           input wire rst,                           // Reset signal
+           input wire en,                            // Enabled signal, pause cpu when low
 
-           input wire[7 : 0] mem_din,              // data input bus
-           output wire[7 : 0] mem_dout,            // data output bus
-           output wire[31 : 0] mem_a,              // address bus (only 17:0 is used)
-           output wire mem_wr,                     // write/read signal (1 for write)
+           input wire[7 : 0] mem_din,                // data input bus
+           output wire[7 : 0] mem_dout,              // data output bus
+           output wire[31 : 0] mem_a,                // address bus (only 17:0 is used)
+           output wire mem_wr,                       // write/read signal (1 for write)
 
-           input wire io_buffer_full,              // 1 if uart buffer is full
+           input wire io_buffer_full,                // 1 if uart buffer is full
 
            output wire[31 : 0] dbgreg_dout  // cpu register output (debugging demo)
        );
@@ -115,7 +115,9 @@ wire ROB_Mp;        // todo
 wire[`REG_DAT_W - 1: 0] ROB_IF_Rpc;
 wire ROB_IF_Full;
 
-mc MC( clk, rst, en,
+mc MC( clk,
+       rst,
+       en,
 
        IC_MC_En, IC_MC_Pc,
        MC_IC_En, MC_IC_Ins,
@@ -125,7 +127,9 @@ mc MC( clk, rst, en,
        MC_DC_En, MC_DC_Dat,
 
        MC_RAM_Rw, MC_RAM_Add,
-       MC_RAM_Dat, RAM_MC_Dat
+       MC_RAM_Dat, RAM_MC_Dat,
+
+       ROB_Mp
      );
 
 

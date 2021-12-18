@@ -6,7 +6,7 @@
 
 - 一个用 Verilog 编写的 RISC-V CPU, 功能为运行 RISC-V 可执行文件
 - 本项目为 ACM 班 20 级大二大作业, 题面见: [RISCV-CPU](https://github.com/ACMClassCourses/RISCV-CPU)
-- 目前进度: `Pass Various Testpoint`
+- 目前进度: `Pass bulgarian`
 
 
 
@@ -98,6 +98,8 @@
 
 ## ⚒️ Todo
 
-- 实现 Instruction Cache 和 Data Cache
+- 更新 Design.pdf
+- 上板测试
+- 实现 Data Cache
 - 实现  Two-level Adaptive Predictor
 

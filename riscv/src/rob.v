@@ -94,6 +94,7 @@ reg mp; // Misprediction
 wire[`REG_DAT_W - 1: 0] headJt;
 assign headJt = jt[head];
 
+
 // IO
 assign oREG_Qn = tail;
 

@@ -17,6 +17,16 @@ module ic (input wire clk,
            output wire oBP_En,
            output wire[`INS_DAT_W - 1: 0] oBP_Ins
           );
+// Cache Data
+reg cEn[`IC_S - 1: 0];
+reg[(`INS_DAT_W - `IC_ADD_W) - 1: 0] cTag[`IC_S - 1: 0];
+reg[`INS_DAT_W - 1: 0] cIns[`IC_S - 1: 0];
+
+// IO
+wire[`IC_ADD_W - 1: 0] iIndex;
+assign iIndex = iIF_Pc[`IC_ADD_W - 1: 0];
+wire[(`INS_DAT_W - `IC_ADD_W) - 1: 0] iTag;
+assign iTag = iIF_Pc[`INS_DAT_W - 1: `IC_ADD_W];
 
 reg out;
 reg[`INS_DAT_W - 1: 0] ins;
@@ -26,22 +36,44 @@ assign oIF_En = out;
 assign oBP_Ins = ins;
 assign oIF_Ins = ins;
 
+// Local Information
+reg[`IC_ADD_W - 1: 0] index;
+
+integer i;
 always @(posedge clk) begin
     if (rst) begin
+        for (i = 0; i < `IC_S; i = i + 1) begin
+            cEn[i] <= 0;
+            cTag[i] <= 0; cIns[i] <= 0;
+        end
+
         out <= 0; ins <= 0;
         oMC_En <= 0; oMC_Pc <= 0;
+
+        index <= 0;
     end
     else if (en) begin
         oMC_En <= 0;
         out <= 0;
 
         if (iIF_En) begin
-            oMC_En <= 1;
-            oMC_Pc <= iIF_Pc;
+            if (cEn[iIndex] && (cTag[iIndex] == iTag)) begin
+                out <= 1;
+                ins <= cIns[iIndex];
+            end
+            else begin
+                oMC_En <= 1;
+                oMC_Pc <= iIF_Pc;
+                index <= iIndex;
+                cEn[iIndex] <= 0;   // ! 防止中断后的紧跟 iIF_En
+                cTag[iIndex] = iIF_Pc[`INS_DAT_W - 1: `IC_ADD_W];
+            end
         end
         if (iMC_En) begin
             out <= 1;
             ins <= iMC_Ins;
+            cEn[index] <= 1;
+            cIns[index] <= iMC_Ins;
         end
     end
 end

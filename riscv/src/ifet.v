@@ -26,7 +26,11 @@ reg[`REG_DAT_W - 1: 0] PC, pcb;
 // PC; Instruction's PC which is ready to be send to IS(PC Backup)
 reg bj; // Is Branch or Jump
 reg[`INS_DAT_W - 1: 0] INS; // Instruction Metadata
-reg[1: 0] status;    // 0: Idle; 1: Waiting for IC; 2: Waiting for BP;
+// * 0: Idle;
+// * 1: Waiting for IC;
+// * 2: Waiting for BP;
+// * 3: Waiting for IC and abandon useless input;
+reg[1: 0] status;
 
 assign oIC_Pc = PC;
 assign oBP_Pc = PC;
@@ -63,7 +67,7 @@ always @(posedge clk) begin
 
         case (status)
             0: begin    // Idle
-                status <= 1;
+                status <= 3;
                 oIC_En <= 1;
                 pcb <= PC;
             end
@@ -93,6 +97,10 @@ always @(posedge clk) begin
                 oIS_En <= 1;
                 bj <= 1;
                 PC <= iBP_Pjt;
+            end
+            3: begin
+                status <= 1;
+                // ? 在 status == 0 的下一个 clk 如果 IC 有输入代表是被精确终端打断的指令, 需要无视
             end
         endcase
     end

@@ -28,7 +28,7 @@ module rs (
            input wire[`REG_DAT_W - 1: 0] iROB_Vs2,
            input wire[`ROB_ADD_W - 1: 0] iROB_Qd,
 
-           output reg oEX_En,
+           output wire oEX_En,
            output wire[`INS_OP_W - 1: 0] oEX_Op,
            output wire[`REG_DAT_W - 1: 0] oEX_Pc,
            output wire[`REG_DAT_W - 1: 0] oEX_Imm,
@@ -78,7 +78,10 @@ generate
     endgenerate
 
         // * Output to Module EX
-        assign oEX_Op = op[exeAdd];
+        // * 存储数据下标为 0..31, 但当无可执行条目时 exeAdd == 0
+        // * 所以 exe[0] 需要特判
+        assign oEX_En = (exeAdd != 0) || (exe0 == 1);
+assign oEX_Op = op[exeAdd];
 assign oEX_Pc = pc[exeAdd];
 assign oEX_Imm = imm[exeAdd];
 assign oEX_Vs1 = vs1[exeAdd]; assign oEX_Vs2 = vs2[exeAdd];
@@ -87,7 +90,6 @@ assign oEX_Qd = qd[exeAdd];
 integer i, k;
 always @(posedge clk) begin
     if (rst) begin
-        oEX_En <= 0;
         for (i = 0; i < `RS_S; i = i + 1) begin
             vs1[i] <= 0; vs2[i] <= 0;
             qs1[i] <= 0; qs2[i] <= 0; qd[i] <= 0;
@@ -96,8 +98,6 @@ always @(posedge clk) begin
         end
     end
     else if (en) begin
-        oEX_En <= 0;
-
         if (iROB_En) begin
             empty[emptyAdd] <= 0;
             vs1[emptyAdd] <= iROB_Vs1; vs2[emptyAdd] <= iROB_Vs2;
@@ -108,12 +108,7 @@ always @(posedge clk) begin
             imm[emptyAdd] <= iROB_Imm;
         end
 
-        if ((exeAdd != 0) || (exe0 == 1)) begin
-            // * 存储数据下标为 0..31, 但当无可执行条目时 exeAdd == 0
-            // * 所以 exe[0] 需要特判
-            oEX_En <= 1;
-            empty[exeAdd] <= 1;
-        end
+        if (oEX_En) empty[exeAdd] <= 1;
 
         if (iEX_En) begin
             for (k = 0; k < `RS_S; k = k + 1) begin

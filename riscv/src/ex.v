@@ -39,7 +39,7 @@ wire[`REG_DAT_W - 1: 0] pc; assign pc = iRS_Pc;
 wire[`REG_DAT_W - 1: 0] imm; assign imm = iRS_Imm;
 wire[`REG_DAT_W - 1: 0] vs1; assign vs1 = iRS_Vs1;
 wire[`REG_DAT_W - 1: 0] vs2; assign vs2 = iRS_Vs2;
-wire[`ROB_ADD_W - 1: 0] qd; assign qd = iRS_Qd;
+reg[`ROB_ADD_W - 1: 0] qd;
 
 assign oRS_En = exOut;
 assign oRS_Qd = qd;
@@ -56,14 +56,15 @@ assign oROB_Jt = jt;
 always @(posedge clk) begin
     if (rst) begin
         exOut <= 0;
-        v <= 0; jt <= 0;
+        qd <= 0; v <= 0; jt <= 0;
     end
     else if (en) begin
         exOut <= 0;
-        v <= 0; jt <= 0;
+        qd <= 0; v <= 0; jt <= 0;
 
         // Calculation
         if (iRS_En) begin
+            qd <= iRS_Qd;
             exOut <= 1;
 
             case (op)

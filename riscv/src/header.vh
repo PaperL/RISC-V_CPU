@@ -14,6 +14,10 @@
 `define INS_DAT_W 32
 `define INS_OP_W 5
 
+// Cache
+`define IC_S 64
+`define IC_ADD_W 6
+
 // FIFO
 `define FIFO_S 32
 `define FIFO_ADD_W 5

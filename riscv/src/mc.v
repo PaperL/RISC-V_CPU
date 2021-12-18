@@ -10,17 +10,19 @@ module mc (input wire clk,
            output wire[`INS_DAT_W - 1: 0] oIC_Ins,
 
            input wire iDC_En,
-           input wire iDC_Rw,                                           // 0:R, 1:W
+           input wire iDC_Rw,                                                 // 0:R, 1:W
            input wire[2: 0] iDC_Len,
            input wire[`MEM_ADD_W - 1: 0] iDC_Add,
            input wire[`REG_DAT_W - 1: 0] iDC_Dat,
            output reg oDC_En,
            output wire[`REG_DAT_W - 1: 0] oDC_Dat,
 
-           output wire oRAM_Rw,                                         // 0:R, 1:W
+           output wire oRAM_Rw,                                               // 0:R, 1:W
            output wire[`MEM_ADD_W - 1: 0] oRAM_Add,
            output reg[`MEM_DAT_W - 1: 0] oRAM_Dat,
-           input wire[`MEM_DAT_W - 1: 0] iRAM_Dat
+           input wire[`MEM_DAT_W - 1: 0] iRAM_Dat,
+
+           input wire iROB_Mp
           );
 
 reg switch; // 0:IC, 1:DC
@@ -44,6 +46,7 @@ always @(posedge clk) begin
         ins <= 0; dat <= 0;
         iCnt <= 0; dCnt <= 0;
         dLen <= 0;
+
         oIC_En <= 0; oDC_En <= 0;
         oRAM_Dat <= 0;
     end
@@ -126,6 +129,17 @@ always @(posedge clk) begin
 
             oRAM_Dat <= iDC_Dat[7: 0];
             // if (iDC_Rw) $display("mem[%0h] %0h", iDC_Add, iDC_Dat);
+        end
+
+        // ! 清空 LOAD 状态, 保留 STORE 状态
+        if (iROB_Mp) begin
+            iW <= 0; iCnt <= 0;
+            if ((dW && dRw) || (iDC_En && iDC_Rw)) switch <= 1;
+            else begin
+                oIC_En <= 0;
+                switch <= 0;
+                dW <= 0; dCnt <= 0;
+            end
         end
     end
 end

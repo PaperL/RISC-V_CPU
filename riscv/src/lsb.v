@@ -17,8 +17,8 @@ module lsb (
 
            // Visit Memory
            output reg oDC_En,
-           output wire oDC_Rw,                        // 0:R, 1:W
-           output reg[2: 0] oDC_Len,                  // 1:B; 2:H; 4:W
+           output wire oDC_Rw,                         // 0:R, 1:W
+           output reg[2: 0] oDC_Len,                   // 1:B; 2:H; 4:W
            output reg[`MEM_ADD_W - 1: 0] oDC_Add,
            output reg[`REG_DAT_W - 1: 0] oDC_Dat,
            input wire iDC_En,
@@ -42,7 +42,7 @@ module lsb (
            input wire iROB_Cs,
 
            // ! Misprediction
-           input wire iROB_Mp,         // todo !!!!!! 未实现
+           input wire iROB_Mp,          // todo !!!!!! 未实现
 
            // Stall IF when Full
            output wire oIF_Full
@@ -150,6 +150,7 @@ always @(posedge clk) begin
             full <= 0;
         end
         else begin
+            // $display("%d %d %d", head, tail, ncs);
             tail <= head + ncs;
             full <= 0;
         end
@@ -232,11 +233,11 @@ always @(posedge clk) begin
                 wDC <= 1;
                 oDC_En <= 1;
                 case (headOp)
-                    5'b0001, 5'b0100, 5'b0110:                             // LB, LBU, SB
+                    5'b0001, 5'b0100, 5'b0110:                              // LB, LBU, SB
                         oDC_Len <= 1;
-                    5'b0010, 5'b0101, 5'b0111:                             // LH, LHU, SH
+                    5'b0010, 5'b0101, 5'b0111:                              // LH, LHU, SH
                         oDC_Len <= 2;
-                    5'b0011, 5'b1000:                                      // LW, SW
+                    5'b0011, 5'b1000:                                       // LW, SW
                         oDC_Len <= 4;
                     default: ;                  // Unexpected OP
                 endcase
