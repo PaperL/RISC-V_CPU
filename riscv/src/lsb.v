@@ -17,8 +17,8 @@ module lsb (
 
            // Visit Memory
            output reg oDC_En,
-           output wire oDC_Rw,                 // 0:R, 1:W
-           output reg[2: 0] oDC_Len,           // 1:B; 2:H; 4:W
+           output wire oDC_Rw,                        // 0:R, 1:W
+           output reg[2: 0] oDC_Len,                  // 1:B; 2:H; 4:W
            output reg[`MEM_ADD_W - 1: 0] oDC_Add,
            output reg[`REG_DAT_W - 1: 0] oDC_Dat,
            input wire iDC_En,
@@ -42,7 +42,7 @@ module lsb (
            input wire iROB_Cs,
 
            // ! Misprediction
-           input wire iROB_Mp,  // todo !!!!!! 未实现
+           input wire iROB_Mp,         // todo !!!!!! 未实现
 
            // Stall IF when Full
            output wire oIF_Full
@@ -58,12 +58,13 @@ wire ls[`FIFO_S - 1: 0];   // 0: LOAD; 1: STORE
 wire exe[`FIFO_S - 1: 0];
 
 // Queue
-reg full, empty;    // ! empty may not be used
+reg full; wire empty;
 reg[`FIFO_ADD_W - 1: 0] head, tail;
 wire [`FIFO_ADD_W - 1: 0] nxtHead, nxtTail;
 
-assign nxtHead = head + 1;
-assign nxtTail = tail + 1;
+assign empty = (!full) && (head == tail);
+assign nxtHead = head + 5'b1;
+assign nxtTail = tail + 5'b1;
 genvar j;
 generate
     for (j = 0; j < `FIFO_S; j = j + 1) begin
@@ -80,7 +81,8 @@ reg[`ROB_ADD_W - 1: 0] oQ;
 
 // Local Information
 reg wDC;
-reg[`FIFO_ADD_W: 0] ncs;  // Number of Committed STORE Instruction
+reg[`FIFO_ADD_W - 1: 0] ncs;    // Number of Committed STORE Instruction
+// BUG 理论上或许 ncs 能够达到 32, 需要 6-bit 长
 
 wire[`INS_OP_W - 1: 0] headOp;
 wire headLs;
@@ -112,6 +114,9 @@ assign vd = (headOp == 5'b0001) ?
 //     oROB_En <= 0;
 //   end
 // endcase
+wire pushCond; assign pushCond = iROB_En;
+wire popCond; assign popCond = wDC && iDC_En;
+
 
 // IO Assign
 assign oDC_Rw = headLs;
@@ -127,15 +132,27 @@ assign oIF_Full = full;
 
 integer i;
 always @(posedge clk) begin
-    if (rst) begin
-        for (i = 0; i < `FIFO_S; i = i + 1) begin
-            qs1[i] <= 0; qs2[i] <= 0;
-            vs1[i] <= 0; vs2[i] <= 0;
-            qd[i] <= 0;
-            op[i] <= 0; imm[i] <= 0;
+    // if (iROB_Mp && head != tail) begin
+    //     $display("ROB_LSB_Mp happen. Head:%0h,\tTail:%0h,\tncs:%d", head, tail, ncs);
+    //     for (i = head; i != tail; i = i + 1) begin
+    //         $display("[%d]\tls:%d,\texe:%d", i, ls[i], exe[i]);
+    //     end
+    // end
+    if (iROB_Mp || rst) begin
+        if (rst) begin
+            for (i = 0; i < `FIFO_S; i = i + 1) begin
+                qs1[i] <= 0; qs2[i] <= 0;
+                vs1[i] <= 0; vs2[i] <= 0;
+                qd[i] <= 0;
+                op[i] <= 0; imm[i] <= 0;
+            end
+            head <= 0; tail <= 0;
+            full <= 0;
         end
-        head <= 0; tail <= 0;
-        full <= 0; empty <= 1;
+        else begin
+            tail <= head + ncs;
+            full <= 0;
+        end
 
         oVd <= 0; oQ <= 0;
 
@@ -159,7 +176,7 @@ always @(posedge clk) begin
 
         oVd <= 0; oQ <= 0;
 
-        ncs <= ncs + {5'b0, iROB_Cs};
+        ncs <= ncs + {4'b0, iROB_Cs};
 
         if (iEX_En) begin   // Update
             for (i = 0; i < `FIFO_S; i = i + 1) begin
@@ -172,7 +189,7 @@ always @(posedge clk) begin
             end
         end
 
-        if (iROB_En) begin  // Push new LS Ins from ROB
+        if (pushCond) begin  // Push new LS Ins from ROB
             qs1[tail] <= iROB_Qs1; qs2[tail] <= iROB_Qs2;
             vs1[tail] <= iROB_Vs1; vs2[tail] <= iROB_Vs2;
             qd[tail] <= iROB_Qd;
@@ -181,10 +198,9 @@ always @(posedge clk) begin
 
             tail <= nxtTail;    // * Push tail
             full <= (nxtTail == head) ? 1 : 0;
-            if (!iDC_En) empty <= 0;
         end
 
-        if (iDC_En) begin   // LS finished, pop front and output load result
+        if (popCond) begin   // LS finished, pop front and output load result
             wDC <= 0;
             if (headLs == 0) begin  // Load
                 for (i = 0; i < `FIFO_S; i = i + 1) begin
@@ -204,7 +220,6 @@ always @(posedge clk) begin
             end                     // Store has no output
 
             head <= nxtHead;        // * Pop front
-            empty <= (nxtHead == tail) ? 1 : 0;
             if (!iROB_En) full <= 0;
         end
 
@@ -217,11 +232,11 @@ always @(posedge clk) begin
                 wDC <= 1;
                 oDC_En <= 1;
                 case (headOp)
-                    5'b0001, 5'b0100, 5'b0110:                      // LB, LBU, SB
+                    5'b0001, 5'b0100, 5'b0110:                             // LB, LBU, SB
                         oDC_Len <= 1;
-                    5'b0010, 5'b0101, 5'b0111:                      // LH, LHU, SH
+                    5'b0010, 5'b0101, 5'b0111:                             // LH, LHU, SH
                         oDC_Len <= 2;
-                    5'b0011, 5'b1000:                               // LW, SW
+                    5'b0011, 5'b1000:                                      // LW, SW
                         oDC_Len <= 4;
                     default: ;                  // Unexpected OP
                 endcase

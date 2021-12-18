@@ -125,11 +125,11 @@ always @(posedge clk) begin
                 5'b00111:   // BLT
                     jt <= ($signed(vs1) < $signed(vs2)) ? (pc + imm) : pc + 4;
                 5'b01000:   // BGE
-                    jt <= ($signed(vs1) > $signed(vs2)) ? (pc + imm) : pc + 4;
+                    jt <= ($signed(vs1) >= $signed(vs2)) ? (pc + imm) : pc + 4;
                 5'b01001:   // BLTU
                     jt <= (vs1 < vs2) ? (pc + imm) : pc + 4;
                 5'b01010:   // BGEU
-                    jt <= (vs1 > vs2) ? (pc + imm) : pc + 4;
+                    jt <= (vs1 >= vs2) ? (pc + imm) : pc + 4;
                 default: ;
             endcase
         end

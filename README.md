@@ -6,7 +6,7 @@
 
 - 一个用 Verilog 编写的 RISC-V CPU, 功能为运行 RISC-V 可执行文件
 - 本项目为 ACM 班 20 级大二大作业, 题面见: [RISCV-CPU](https://github.com/ACMClassCourses/RISCV-CPU)
-- 目前进度: `gcd`
+- 目前进度: `Pass Various Testpoint`
 
 
 
@@ -90,12 +90,14 @@
   - [Verilog HDL Case Statement warning at *<location>*: incomplete case statement has no default case item](https://www.intel.com/content/www/us/en/programmable/quartushelp/13.0/mergedProjects/msgs/msgs/wvrfx_l2_veri_incomplete_case_statement.htm)
   - [SystemVerilog's priority & unique - A Solution to Verilog's "full_case" & "parallel_case" Evil Twins! by Clifford E. Cummings](http://www.sunburst-design.com/papers/CummingsSNUG2005Israel_SystemVerilog_UniquePriority.pdf)    3.1-3.3 节
 - 使用模拟程序对拍 Register 和 Memory 写入操作能有效 Debug
+  - 使用 Verilog 仿真中的 `$display("reg[%0h] %0h", rd, vd);` 指令
+
+- 关于 FIFO 结构中 Full & Empty Flag 的实现方式，其中一个使用 reg 在 always 块中维护其正确，另一个使用 wire（例如 `assign empty = !full && head==tail;`）。该方法最为简洁方便
 
 
 
 ## ⚒️ Todo
 
-- 实现 LSB 精确中断
 - 实现 Instruction Cache 和 Data Cache
-- 实现 Branch Prediction
+- 实现  Two-level Adaptive Predictor
 

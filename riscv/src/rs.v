@@ -72,7 +72,7 @@ generate
         assign exe[j] = (!empty[j]) && (qs1[j] == 5'b0) && (qs2[j] == 5'b0);
     end
     for (j = 0; j < `RS_S; j = j + 1) begin
-        assign findEmpty[j] = empty[j] ? j : findEmpty[j + 1];
+        assign findEmpty[j] = empty[j] ? j : findEmpty[j + 1];  // RS 大小与 ROB 相同，故不可能出现 ROB 未满而 RS 满
         assign findExe[j] = exe[j] ? j : findExe[j + 1];
     end
     endgenerate

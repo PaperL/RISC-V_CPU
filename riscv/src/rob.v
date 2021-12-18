@@ -51,7 +51,7 @@ module rob (
            input wire[`REG_DAT_W - 1: 0] iEX_Jt,
 
            // Commit
-           output reg oLSB_Cs,                                 // Commit Store
+           output reg oLSB_Cs,                                   // Commit Store
            input wire iLSB_En,
            input wire[`ROB_ADD_W - 1: 0] iLSB_Qd,
            input wire[`REG_DAT_W - 1: 0] iLSB_Vd,
@@ -63,7 +63,7 @@ module rob (
            output reg[`REG_DAT_W - 1: 0] oREG_Vd,
 
            // Branch / JUMP
-           output wire oMp,                                                  // Misprediction
+           output wire oMp,                                                    // Misprediction
            output reg[`REG_DAT_W - 1: 0] oIF_Rpc,
 
            // Full
@@ -81,12 +81,13 @@ reg [`REG_DAT_W - 1: 0] pjt[`FIFO_S - 1: 0];
 reg rdy[`FIFO_S - 1: 0];
 
 // Queue
-reg full, empty;    // ! empty may not be used
+reg full; wire empty;
 reg[`FIFO_ADD_W - 1: 0] head, tail;
 wire [`FIFO_ADD_W - 1: 0] nxtHead, nxtTail;
 
-assign nxtHead = ((head + 1 != 0) ? (head + 1) : 1);
-assign nxtTail = ((tail + 1 != 0) ? (tail + 1) : 1);
+assign empty = (!full) && (head == tail);
+assign nxtHead = ((head + 5'b1 != 5'b0) ? (head + 5'b1) : 5'b1);
+assign nxtTail = ((tail + 5'b1 != 5'b0) ? (tail + 5'b1) : 5'b1);
 
 // Local Information
 reg mp; // Misprediction
@@ -127,7 +128,7 @@ always @(posedge clk) begin
             pjt[i] <= 0; rdy[i] <= 0;
         end
 
-        full <= 0; empty <= 1;
+        full <= 0;
         head <= 1; tail <= 1;
 
         mp <= 0;
@@ -175,7 +176,6 @@ always @(posedge clk) begin
 
             tail <= nxtTail;    // * Push tail
             full <= (nxtTail == head) ? 1 : 0;
-            if (!(!empty && (is[head] || rdy[head]))) empty <= 0;
         end
 
         // Ready to commit first instruction
@@ -185,7 +185,6 @@ always @(posedge clk) begin
                 // Nothing is needed for STORE to commit, so STORE needn't "rdy" signal
                 oLSB_Cs <= 1;
                 head <= nxtHead;    // * Pop front
-                empty <= (nxtHead == tail) ? 1 : 0;
                 if (!iIS_En) full <= 0;
             end
             else if (rdy[head]) begin
@@ -203,7 +202,6 @@ always @(posedge clk) begin
                 end
 
                 head <= nxtHead;    // * Pop front
-                empty <= (nxtHead == tail) ? 1 : 0;
                 if (!iIS_En) full <= 0;
             end
         end

@@ -26,9 +26,9 @@ initial begin
 end
 
 initial begin
-    $dumpfile("cpu_.vcd");
-    $dumpvars(0, testbench);
-    //#300000000 $finish;
+    // $dumpfile("cpu_.vcd");
+    // $dumpvars(0, testbench);
+    // #300000000 $finish;
 end
 
 endmodule

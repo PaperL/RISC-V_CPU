@@ -38,6 +38,7 @@ reg[`ROB_ADD_W - 1: 0] q[`REG_S - 1: 0];
 
 // todo Debug
 wire[`REG_DAT_W - 1: 0] regA0; assign regA0 = v[10];
+wire[`ROB_ADD_W-1:0] q02; assign q02 = q[2];
 
 // wire[`FIFO_ADD_W-1:0] qS0 = q[8];
 
@@ -76,6 +77,7 @@ always@(posedge clk) begin
         end
 
         if (iROB_En) begin
+            // $display("reg[%0h] %0h", iROB_Rd, iROB_Vd);
             v[iROB_Rd] <= iROB_Vd;
             if(q[iROB_Rd] == iROB_Qd) q[iROB_Rd] <= 0;
             // oROB_Vs is logic circuit,
