@@ -36,11 +36,12 @@ module regfile(input wire clk,
 reg[`REG_DAT_W - 1: 0] v[`REG_S - 1: 0];
 reg[`ROB_ADD_W - 1: 0] q[`REG_S - 1: 0];
 
-// todo Debug
+// DEBUG
 wire[`REG_DAT_W - 1: 0] regA0; assign regA0 = v[10];
 wire[`ROB_ADD_W-1:0] q02; assign q02 = q[2];
 
 // wire[`FIFO_ADD_W-1:0] qS0 = q[8];
+// wire[`ROB_ADD_W-1:0] qa; assign qa = q[10];
 
 integer i;
 always@(posedge clk) begin
@@ -60,6 +61,15 @@ always@(posedge clk) begin
         oROB_En <= 0;
         oROB_Op <= 0; oROB_Pc <= 0; oROB_Imm <= 0; oROB_Ils <= 0;
 
+        if (iROB_En) begin
+            // $display("reg[%0h] %0h", iROB_Rd, iROB_Vd);
+            v[iROB_Rd] <= iROB_Vd;
+            if(q[iROB_Rd] == iROB_Qd) q[iROB_Rd] <= 0;
+            // oROB_Vs is logic circuit,
+            // so when commit_rd == new_ins_rs, output_vs = input_vd
+        end
+        // * 根据 ROB 清除 q 值优先级低于新 q 值
+
         if (iIS_En) begin
             oROB_Op <= iIS_Op;
             oROB_Pc <= iIS_Pc;
@@ -76,13 +86,6 @@ always@(posedge clk) begin
             q[iIS_Rd] <= iROB_Qn;
         end
 
-        if (iROB_En) begin
-            // $display("reg[%0h] %0h", iROB_Rd, iROB_Vd);
-            v[iROB_Rd] <= iROB_Vd;
-            if(q[iROB_Rd] == iROB_Qd) q[iROB_Rd] <= 0;
-            // oROB_Vs is logic circuit,
-            // so when commit_rd == new_ins_rs, output_vs = input_vd
-        end
     end
 
     q[0] <= 0;

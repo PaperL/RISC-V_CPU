@@ -83,11 +83,12 @@ reg rdy[`FIFO_S - 1: 0];
 // Queue
 reg full; wire empty;
 reg[`FIFO_ADD_W - 1: 0] head, tail;
-wire [`FIFO_ADD_W - 1: 0] nxtHead, nxtTail;
+wire [`FIFO_ADD_W - 1: 0] nxtHead, nxtTail, fullPtr;
 
 assign empty = (!full) && (head == tail);
 assign nxtHead = ((head + 5'b1 != 5'b0) ? (head + 5'b1) : 5'b1);
 assign nxtTail = ((tail + 5'b1 != 5'b0) ? (tail + 5'b1) : 5'b1);
+assign fullPtr = ((tail + 5'b100 != 5'b100) ? (tail + 5'b100) : 5'b1);
 
 // Local Information
 reg mp; // Misprediction
@@ -176,7 +177,7 @@ always @(posedge clk) begin
             pjt[tail] <= iIS_Pjt;
 
             tail <= nxtTail;    // * Push tail
-            full <= (nxtTail == head) ? 1 : 0;
+            full <= (fullPtr == head) ? 1 : 0;
         end
 
         // Ready to commit first instruction

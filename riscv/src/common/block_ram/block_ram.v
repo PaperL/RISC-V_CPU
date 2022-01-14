@@ -75,6 +75,9 @@ module single_port_ram_sync
 reg [DATA_WIDTH-1:0] ram [2**ADDR_WIDTH-1:0];
 reg [ADDR_WIDTH-1:0] q_addr_a;
 
+// DEBUG
+// wire[7:0] dat_1c14 = ram[32'h1c14];
+
 always @(posedge clk)
   begin
     if (we)

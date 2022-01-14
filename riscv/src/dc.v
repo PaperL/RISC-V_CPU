@@ -6,7 +6,7 @@ module dc (
            input wire en,
 
            input wire iLSB_En,
-           input wire iLSB_Rw,                   // 0:R, 1:W
+           input wire iLSB_Rw,                    // 0:R, 1:W
            input wire[2: 0] iLSB_Len,
            input wire[`MEM_ADD_W - 1: 0] iLSB_Add,
            input wire[`REG_DAT_W - 1: 0] iLSB_Dat,
@@ -14,12 +14,15 @@ module dc (
            output reg[`REG_DAT_W - 1: 0] oLSB_Dat,
 
            output reg oMC_En,
-           output reg oMC_Rw,                   // 0:R, 1:W
+           output reg oMC_Rw,                    // 0:R, 1:W
            output reg[2: 0] oMC_Len,
            output reg[`MEM_ADD_W - 1: 0] oMC_Add,
            output reg[`REG_DAT_W - 1: 0] oMC_Dat,
            input wire iMC_En,
-           input wire[`REG_DAT_W - 1: 0] iMC_Dat
+           input wire[`REG_DAT_W - 1: 0] iMC_Dat,
+
+           // ! Misprediction
+           input wire iROB_Mp
        );
 
 reg[2: 0] len;
@@ -43,6 +46,11 @@ always @(posedge clk) begin
             oLSB_En <= 1;
             oLSB_Dat <= iMC_Dat;
         end
+    end
+
+    if ((!rst) && iROB_Mp && iLSB_En && (iLSB_Rw == 1)) begin
+        oMC_En <= 1; oMC_Rw <= iLSB_Rw; oMC_Len <= iLSB_Len;
+        oMC_Add <= iLSB_Add; oMC_Dat <= iLSB_Dat;
     end
 end
 

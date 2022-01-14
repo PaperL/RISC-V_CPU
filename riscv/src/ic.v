@@ -39,6 +39,12 @@ assign oIF_Ins = ins;
 // Local Information
 reg[`IC_ADD_W - 1: 0] index;
 
+wire[`INS_DAT_W - 1: 0] ci;
+assign ci = cIns[iIndex];
+
+wire isLBU; // BUG IO Sleep 功能中的 LBU 指令出现异常
+assign isLBU = (ci[6: 0] == 7'b0000011 || ci[6: 0] == 7'b0100011);
+
 integer i;
 always @(posedge clk) begin
     if (rst) begin
@@ -57,9 +63,9 @@ always @(posedge clk) begin
         out <= 0;
 
         if (iIF_En) begin
-            if (cEn[iIndex] && (cTag[iIndex] == iTag)) begin
+            if (cEn[iIndex] && (cTag[iIndex] == iTag) && (!isLBU)) begin
                 out <= 1;
-                ins <= cIns[iIndex];
+                ins <= ci;
             end
             else begin
                 oMC_En <= 1;

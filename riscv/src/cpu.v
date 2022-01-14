@@ -1,16 +1,16 @@
 // RISCV32I CPU top module
 `include "header.vh"
 module cpu(
-           input wire clk,                           // System Clock signal
-           input wire rst,                           // Reset signal
-           input wire en,                            // Enabled signal, pause cpu when low
+           input wire clk,                             // System Clock signal
+           input wire rst,                             // Reset signal
+           input wire en,                              // Enabled signal, pause cpu when low
 
-           input wire[7 : 0] mem_din,                // data input bus
-           output wire[7 : 0] mem_dout,              // data output bus
-           output wire[31 : 0] mem_a,                // address bus (only 17:0 is used)
-           output wire mem_wr,                       // write/read signal (1 for write)
+           input wire[7 : 0] mem_din,                  // data input bus
+           output wire[7 : 0] mem_dout,                // data output bus
+           output wire[31 : 0] mem_a,                  // address bus (only 17:0 is used)
+           output wire mem_wr,                         // write/read signal (1 for write)
 
-           input wire io_buffer_full,                // 1 if uart buffer is full
+           input wire io_buffer_full,                  // 1 if uart buffer is full
 
            output wire[31 : 0] dbgreg_dout  // cpu register output (debugging demo)
        );
@@ -91,7 +91,7 @@ wire LSB_RS_En;
 wire[`ROB_ADD_W - 1: 0] LSB_RS_Qd; wire[`REG_DAT_W - 1: 0] LSB_RS_Vd;
 wire LSB_ROB_En;
 wire[`ROB_ADD_W - 1: 0] LSB_ROB_Qd; wire[`REG_DAT_W - 1: 0] LSB_ROB_Vd;
-wire LSB_IF_Full;   // todo
+wire LSB_IF_Full;
 // ROB
 wire ROB_RS_En;
 wire[`INS_OP_W - 1: 0] ROB_RS_Op;
@@ -111,13 +111,11 @@ wire ROB_REG_En;
 wire[`REG_ADD_W - 1: 0] ROB_REG_Rd;
 wire[`FIFO_ADD_W - 1: 0] ROB_REG_Qd;
 wire[`REG_DAT_W - 1: 0] ROB_REG_Vd;
-wire ROB_Mp;        // todo
+wire ROB_Mp;
 wire[`REG_DAT_W - 1: 0] ROB_IF_Rpc;
 wire ROB_IF_Full;
 
-mc MC( clk,
-       rst,
-       en,
+mc MC( clk, rst, en,
 
        IC_MC_En, IC_MC_Pc,
        MC_IC_En, MC_IC_Ins,
@@ -152,7 +150,9 @@ dc DC( clk, rst, en,
 
        DC_MC_En, DC_MC_Rw, DC_MC_Len,
        DC_MC_Add, DC_MC_Dat,
-       MC_DC_En, MC_DC_Dat
+       MC_DC_En, MC_DC_Dat,
+
+       ROB_Mp
      );
 
 bp BP( clk, rst, en,
@@ -164,7 +164,7 @@ bp BP( clk, rst, en,
 
 ifet IF( clk,
          rst,
-         en & (!ROB_IF_Full) & (!LSB_IF_Full),
+         en,
 
          IF_IC_En, IF_IC_Pc,
          IC_IF_En, IC_IF_Ins,
@@ -176,7 +176,9 @@ ifet IF( clk,
          IF_IS_Bj, IF_IS_Pc, IF_IS_Pjt,
 
          ROB_Mp,
-         ROB_IF_Rpc
+         ROB_IF_Rpc,
+
+         (ROB_IF_Full | LSB_IF_Full)
        );
 
 is IS( clk, rst | ROB_Mp, en,
@@ -261,6 +263,7 @@ lsb LSB(clk, rst, en,
 
         ROB_Mp,
 
+        io_buffer_full,
         LSB_IF_Full
        );
 

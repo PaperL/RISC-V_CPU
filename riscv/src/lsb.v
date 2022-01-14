@@ -17,8 +17,8 @@ module lsb (
 
            // Visit Memory
            output reg oDC_En,
-           output wire oDC_Rw,                         // 0:R, 1:W
-           output reg[2: 0] oDC_Len,                   // 1:B; 2:H; 4:W
+           output wire oDC_Rw,                                // 0:R, 1:W
+           output reg[2: 0] oDC_Len,                          // 1:B; 2:H; 4:W
            output reg[`MEM_ADD_W - 1: 0] oDC_Add,
            output reg[`REG_DAT_W - 1: 0] oDC_Dat,
            input wire iDC_En,
@@ -42,10 +42,10 @@ module lsb (
            input wire iROB_Cs,
 
            // ! Misprediction
-           input wire iROB_Mp,          // todo !!!!!! 未实现
+           input wire iROB_Mp,
 
-           // Stall IF when Full
-           output wire oIF_Full
+           input wire iIOB_Full,       // Stall when IO Buffer is Full
+           output wire oIF_Full     // Stall IF when Full
        );
 
 // Main Data
@@ -60,11 +60,12 @@ wire exe[`FIFO_S - 1: 0];
 // Queue
 reg full; wire empty;
 reg[`FIFO_ADD_W - 1: 0] head, tail;
-wire [`FIFO_ADD_W - 1: 0] nxtHead, nxtTail;
+wire [`FIFO_ADD_W - 1: 0] nxtHead, nxtTail, fullPtr1, fullPtr2;
 
 assign empty = (!full) && (head == tail);
-assign nxtHead = head + 5'b1;
-assign nxtTail = tail + 5'b1;
+assign nxtHead = head + 5'b1;assign nxtTail = tail + 5'b1;
+assign fullPtr1 = tail + 5'b11;
+assign fullPtr2 = tail + 5'b10;
 genvar j;
 generate
     for (j = 0; j < `FIFO_S; j = j + 1) begin
@@ -147,18 +148,26 @@ always @(posedge clk) begin
                 op[i] <= 0; imm[i] <= 0;
             end
             head <= 0; tail <= 0;
-            full <= 0;
+            ncs <= 0;
+            wDC <= 0;
         end
         else begin
-            // $display("%d %d %d", head, tail, ncs);
-            tail <= head + ncs;
-            full <= 0;
+            if (wDC == 0 || empty || headLs == 0) begin
+                wDC <= 0;
+                tail <= head + ncs;
+            end
+            else begin
+                tail <= head + ncs + 1;
+                if (popCond) begin
+                    wDC <= 0;
+                    head <= nxtHead;        // * Pop front
+                end
+            end
         end
 
-        oVd <= 0; oQ <= 0;
+        full <= 0;  // BUG 理论上可能出现清除后仍 full 的情况
 
-        wDC <= 0;
-        ncs <= 0;
+        oVd <= 0; oQ <= 0;
 
         oDC_En <= 0;
         oDC_Len <= 0; oDC_Add <= 0; oDC_Dat <= 0;
@@ -198,7 +207,10 @@ always @(posedge clk) begin
             imm[tail] <= iROB_Imm;
 
             tail <= nxtTail;    // * Push tail
-            full <= (nxtTail == head) ? 1 : 0;
+            // full <= (nxtTail == head) ? 1 : 0;
+            full <= (nxtTail == head ||
+                     fullPtr1 == head ||
+                     fullPtr2 == head) ? 1 : 0;
         end
 
         if (popCond) begin   // LS finished, pop front and output load result
@@ -221,7 +233,7 @@ always @(posedge clk) begin
             end                     // Store has no output
 
             head <= nxtHead;        // * Pop front
-            if (!iROB_En) full <= 0;
+            if (!pushCond && !(nxtTail == head || fullPtr1 == head)) full <= 0;
         end
 
         // * Handle front LS;
@@ -233,16 +245,16 @@ always @(posedge clk) begin
                 wDC <= 1;
                 oDC_En <= 1;
                 case (headOp)
-                    5'b0001, 5'b0100, 5'b0110:                              // LB, LBU, SB
+                    5'b0001, 5'b0100, 5'b0110:                                     // LB, LBU, SB
                         oDC_Len <= 1;
-                    5'b0010, 5'b0101, 5'b0111:                              // LH, LHU, SH
+                    5'b0010, 5'b0101, 5'b0111:                                     // LH, LHU, SH
                         oDC_Len <= 2;
-                    5'b0011, 5'b1000:                                       // LW, SW
+                    5'b0011, 5'b1000:                                              // LW, SW
                         oDC_Len <= 4;
                     default: ;                  // Unexpected OP
                 endcase
             end
-            else if ((ncs != 0) || iROB_Cs) begin  // STORE
+            else if ((!iIOB_Full) && ((ncs != 0) || iROB_Cs)) begin  // STORE
                 ncs <= iROB_Cs ? ncs : (ncs - 1);
                 wDC <= 1;
                 oDC_En <= 1;
@@ -258,3 +270,10 @@ always @(posedge clk) begin
 end
 
 endmodule
+
+    /*
+     * 任意 SL 操作都需要等 DC 返回结果
+     * Load 需要根据 mp 信号清除 wDC 标记（应该不会出现下一个指令的 wDC 标记导致获得上一条指令结果）
+     * 不能清除 Store 的 wDC 标记
+     * ncs 代表还有几个要提交
+     */

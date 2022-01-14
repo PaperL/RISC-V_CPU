@@ -99,7 +99,7 @@
 ## ⚒️ Todo
 
 - 更新 Design.pdf
-- 上板测试
+- 修复 IO 相关 Bug
 - 实现 Data Cache
 - 实现  Two-level Adaptive Predictor
 
