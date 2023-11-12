@@ -1,6 +1,8 @@
 # ⛳ RISC-V CPU
 
-> For Chinese readme, see (README_CN.md)[README_CN.md].
+> For Chinese readme, see (README_CN.md)[assets/README_CN.md].
+
+
 
 ## 🎈 Introduction
 
@@ -12,13 +14,16 @@
 ## ✒️ CPU Structure
 
 - Tomasulo out-of-order execution algorithm
-- See design draft [Draft.pdf](Draft.pdf)
+- See detailed design draft [Draft.pdf](assets/Draft.pdf)
+
+![Diagram](assets/Diagram.png)
+
 
 
 
 ## 📖 Instructions
 
-- Description of provided FPGA communication and test tools (for the AX7035 board) can be found in [tutorial.md](tutorial.md)
+- Description of provided FPGA communication and test tools (for the AX7035 board) can be found in [tutorial.md](assets/tutorial.md)
 - Development environment: Windows, VS Code, iVerilog, Vivado
 - VS Code extensions:
   - Language support [`Verilog-HDL/SystemVerilog/Bluespec SystemVerilog`](https://github.com/mshr-h/vscode-verilog-hdl-support) `v1.5.1`
