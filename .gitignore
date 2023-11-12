@@ -1,5 +1,8 @@
-riscv/test/
+*copy*
+
 *.o
 *.vcd
+
+riscv/test/
+
 .VSCodeCounter/
-*copy*
