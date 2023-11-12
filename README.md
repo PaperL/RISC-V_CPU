@@ -1,6 +1,6 @@
 # ⛳ RISC-V CPU
 
-> For Chinese readme, see (README_CN.md)[README_CN.md].
+> For Chinese readme, see [README_CN.md](README_CN.md).
 
 ## 🎈 Introduction
 
@@ -31,13 +31,13 @@
 
 ## 📇 Supported Instructions
 
-> RV32I Base Integer Instructions (39 instructions), without ECALL and EBREAK instructions.
+> RV32I Base Integer Instructions (39 instructions) without ECALL and EBREAK instructions.
 >
 > The following table lists the implemented 37 instructions.
 >
 > Blank cell represents the same as above. The internal code can be nonunique because different instructions are processed in different modules.
 
-| Inst      | InternalCode | FMT | Opcode  | Funct3 | FUNCT7  | Note                                  |
+| Inst      | InternalCode | FMT | Opcode  | Funct3 | Funct7  | Note                                  |
 | --------- | ------------ | --- | ------- | ------ | ------- | ------------------------------------- |
 | **LUI**   | 00001        | U   | 0110111 |        |         | Load Upper Immediate                  |
 | **AUIPC** | 00010        |     | 0010111 |        |         | Add Upper Immediate to PC             |
